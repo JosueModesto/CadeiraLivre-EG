@@ -1,0 +1,49 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: cadeira_livre_db
+    restart: always
+    environment:
+      POSTGRES_USER: cadeira_livre_user
+      POSTGRES_PASSWORD: cadeira_livre_password
+      POSTGRES_DB: cadeira_livre_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cadeira_livre_user -d cadeira_livre_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    container_name: cadeira_livre_backend
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: cadeira_livre_user
+      DB_PASS: cadeira_livre_password
+      DB_NAME: cadeira_livre_db
+      PORT: 3000
+      JWT_SECRET: supersecret
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: cadeira_livre_frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
