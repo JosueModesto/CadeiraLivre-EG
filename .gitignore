@@ -119,6 +119,16 @@ dist
 # Firebase cache directory
 .firebase/
 
+# Docker volumes locais
+postgres_data/
+
+# Vite build output
+frontend/dist/
+
+# Variáveis de ambiente locais
+.env.local
+.env.*.local
+
 # TernJS port file
 .tern-port
 

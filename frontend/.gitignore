@@ -1,0 +1,24 @@
+# Dependências
+node_modules/
+
+# Build do Vite
+dist/
+
+# Cache do Vite
+.vite/
+
+# Variáveis de Ambiente
+.env
+.env.*
+!.env.example
+
+# Arquivos de Sistema Operacional
+.DS_Store
+Thumbs.db
+
+# Configurações de Editores de Código
+.vscode/
+.idea/
+
+# Cobertura de testes
+coverage/
