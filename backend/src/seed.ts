@@ -53,7 +53,7 @@ async function runSeed() {
     {
       nome: "Cliente Demo",
       email: "cliente@cadeiralivre.com",
-      senha: "$2b$10$abcdefghijklmnopqrstuv1234567890abcdefghijklmnopq",
+      senha: "$2a$10$fuKiZhUt9K3p0UpqaulOc.mU31aBBlmmzFFdUGSeIRpi8jHu6uTky",
       telefone: "(44) 99999-0001",
       tipo_usuario: TipoUsuario.CLIENTE,
       cidade_id: cidadePrincipal.id,
@@ -66,7 +66,7 @@ async function runSeed() {
     {
       nome: "Dono Barbearia",
       email: "dono@cadeiralivre.com",
-      senha: "$2b$10$abcdefghijklmnopqrstuv1234567890abcdefghijklmnopq",
+      senha: "$2a$10$fuKiZhUt9K3p0UpqaulOc.mU31aBBlmmzFFdUGSeIRpi8jHu6uTky",
       telefone: "(44) 99999-0002",
       tipo_usuario: TipoUsuario.BARBEARIA,
       cidade_id: cidadeSecundaria.id,
