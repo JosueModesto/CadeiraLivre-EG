@@ -1,26 +1,35 @@
 import {
-  Entity,
-  PrimaryColumn,
   Column,
-  OneToOne,
-  JoinColumn
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
 } from "typeorm";
-import { Usuario } from "./Usuario";
+import { Agendamento } from "./Agendamento";
+import { Barbearia } from "./Barbearia";
 
-@Entity("barbeiro")
+@Entity("barbeiros")
 export class Barbeiro {
-  @PrimaryColumn()
+  @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ type: "varchar", length: 11, unique: true, nullable: true })
-  celular?: string;
+  @Column({ type: "int", nullable: false })
+  barbearia_id!: number;
 
-  @Column({ type: "text", nullable: true })
-  descricao?: string;
+  @ManyToOne(() => Barbearia, (barbearia) => barbearia.barbeiros, {
+    nullable: false,
+    onDelete: "CASCADE",
+  })
+  @JoinColumn({ name: "barbearia_id" })
+  barbearia!: Barbearia;
 
+  @Column({ type: "varchar", length: 100, nullable: false })
+  nome!: string;
 
-  //Relacionamento 1:1 com Usuario
-  @OneToOne(() => Usuario, usuario => usuario.barbeiro, { onDelete: "CASCADE" })
-  @JoinColumn({ name: "id" })
-  usuario?: Usuario;
+  @Column({ type: "boolean", nullable: false, default: true })
+  ativo!: boolean;
+
+  @OneToMany(() => Agendamento, (agendamento) => agendamento.barbeiro)
+  agendamentos?: Agendamento[];
 }
