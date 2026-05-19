@@ -33,6 +33,9 @@ services:
       DB_USER: cadeira_livre_user
       DB_PASS: cadeira_livre_password
       DB_NAME: cadeira_livre_db
+      DB_SYNCHRONIZE: "true"
+      DB_LOGGING: "false"
+      DB_RUN_SEED: "true"
       PORT: 3000
       JWT_SECRET: supersecret
 

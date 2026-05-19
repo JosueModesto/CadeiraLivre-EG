@@ -1,8 +1,12 @@
 const express = require("express");
 const { AppDataSource } = require("./data-source");
+const { runSeed } = require("./seed");
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
+const dbRetryDelayMs = Number(process.env.DB_RETRY_DELAY_MS || 3000);
+
+app.use(express.json());
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok", service: "backend" });
@@ -18,17 +22,26 @@ app.get("/api/ping", async (_req, res) => {
 });
 
 async function bootstrap() {
-  try {
-    await AppDataSource.initialize();
-    console.log("TypeORM connected to Postgres");
-
-    app.listen(port, () => {
-      console.log(`Backend running on port ${port}`);
-    });
-  } catch (error) {
-    console.error("TypeORM initialization failed:", error.message);
-    process.exit(1);
+  while (!AppDataSource.isInitialized) {
+    try {
+      await AppDataSource.initialize();
+      console.log("TypeORM connected to Postgres");
+    } catch (error) {
+      console.error(`TypeORM initialization failed: ${error.message}`);
+      console.log(`Retrying DB connection in ${dbRetryDelayMs}ms...`);
+      await new Promise((resolve) => setTimeout(resolve, dbRetryDelayMs));
+    }
   }
+
+  try {
+    await runSeed();
+  } catch (error) {
+    console.error(`Seed failed: ${error.message}`);
+  }
+
+  app.listen(port, () => {
+    console.log(`Backend running on port ${port}`);
+  });
 }
 
 bootstrap();
