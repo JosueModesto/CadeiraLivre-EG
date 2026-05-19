@@ -1,7 +1,11 @@
-require("reflect-metadata");
-require("ts-node/register/transpile-only");
-const path = require("path");
-const { DataSource } = require("typeorm");
+import "reflect-metadata";
+import "ts-node/register/transpile-only";
+import path from "path";
+import { fileURLToPath } from "url";
+import { DataSource } from "typeorm";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const synchronize = process.env.DB_SYNCHRONIZE === "true";
 const logging = process.env.DB_LOGGING === "true";
@@ -15,9 +19,9 @@ const AppDataSource = new DataSource({
   database: process.env.DB_NAME,
   synchronize,
   logging,
-  entities: [path.join(__dirname, "entities", "*.{ts,js}")],
+  entities: [path.join(__dirname, "entities", "*.ts")],
   migrations: [],
   subscribers: [],
 });
 
-module.exports = { AppDataSource };
+export { AppDataSource };
