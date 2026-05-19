@@ -1,5 +1,6 @@
 import express, { Router } from "express";
 import swaggerUi from "swagger-ui-express";
+import cors from "cors";
 import { AppDataSource } from "./data-source";
 import { runSeed } from "./seed";
 import { swaggerDocs } from "./swagger";
@@ -14,6 +15,14 @@ const dbRetryDelayMs = Number(process.env.DB_RETRY_DELAY_MS || 3000);
 const apiRoutes = Router();
 apiRoutes.use("/auth", authRoutes);
 apiRoutes.use("/usuarios", usuarioRoutes);
+
+// CORS Configuration
+app.use(cors({
+  origin: ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
 
 app.use(express.json());
 
