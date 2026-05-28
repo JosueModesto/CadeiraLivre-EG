@@ -2,7 +2,7 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Barbearia } from "./Barbearia";
 import { Usuario } from "./Usuario";
 
-@Entity("cidades")
+@Entity("cidade")
 export class Cidade {
   @PrimaryGeneratedColumn()
   id!: number;
