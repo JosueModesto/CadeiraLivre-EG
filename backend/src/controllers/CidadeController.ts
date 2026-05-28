@@ -67,10 +67,10 @@ async getById(req: Request, res: Response): Promise<Response> {
             id: true,
             nome: true, 
         },
-        barbearias: {
+        /*barbearias: {
             id: true,
             nome: true,
-        }
+        }*/
         }
       });
 

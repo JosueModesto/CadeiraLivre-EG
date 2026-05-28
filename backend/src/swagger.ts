@@ -292,4 +292,191 @@ export const swaggerDocs = {
       },
     },
   },
+
+  // ================= ROTAS DE CIDADES =================
+    "/api/cidades": {
+      post: {
+        summary: "Cria uma nova cidade",
+        tags: ["Cidades"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["nome", "estado"],
+                properties: {
+                  nome: { type: "string", description: "Nome da cidade" },
+                  estado: { type: "string", description: "Sigla do estado (Ex: SP)" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Cidade criada com sucesso",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Cidade criada com sucesso!" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Campos obrigatórios faltando",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Campos obrigatórios faltando" },
+                  },
+                },
+              },
+            },
+          },
+          "500": {
+            description: "Erro interno no servidor",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Erro interno no Servidor" },
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      get: {
+        summary: "Lista todas as cidades",
+        tags: ["Cidades"],
+        responses: {
+          "200": {
+            description: "Lista de cidades cadastrada",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    cidades: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: { type: "number" },
+                          nome: { type: "string" },
+                          estado: { type: "string" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "500": {
+            description: "Erro interno no servidor",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Erro interno no servidor" },
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/cidades/{id}": {
+      get: {
+        summary: "Obtém uma cidade específica com seus usuários e barbearias filtrados",
+        tags: ["Cidades"],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "number" },
+            description: "ID da cidade",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Cidade encontrada",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    id: { type: "number" },
+                    nome: { type: "string" },
+                    estado: { type: "string" },
+                    usuarios: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: { type: "number" },
+                          nome: { type: "string" },
+                        },
+                      },
+                    },
+                    barbearias: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: { type: "number" },
+                          nome: { type: "string" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "404": {
+            description: "Cidade não encontrada",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Cidade não encontrada" },
+                  },
+                },
+              },
+            },
+          },
+          "500": {
+            description: "Erro interno no servidor",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Erro interno no servidor" },
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
 };
