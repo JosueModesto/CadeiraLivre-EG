@@ -47,6 +47,20 @@ async function runSeed() {
     { nome: "Maringa", estado: "PR" }
   );
 
+  const cidadesExtras = [
+    { nome: "Curitiba", estado: "PR" },
+    { nome: "Londrina", estado: "PR" },
+    { nome: "Cascavel", estado: "PR" },
+  ];
+
+  for (const cidade of cidadesExtras) {
+    await upsertOne(
+      cidadeRepository,
+      { nome: cidade.nome, estado: cidade.estado },
+      { nome: cidade.nome, estado: cidade.estado }
+    );
+  }
+
   const cliente = await upsertOne(
     usuarioRepository,
     { email: "cliente@cadeiralivre.com" },
@@ -118,19 +132,30 @@ async function runSeed() {
     {
       barbearia_id: barbearia.id,
       nome: "Rafael",
+      telefone: "(44) 99111-1001",
       ativo: true,
     }
   );
 
-  await upsertOne(
-    barbeiroRepository,
-    { barbearia_id: barbearia.id, nome: "Lucas" },
-    {
-      barbearia_id: barbearia.id,
-      nome: "Lucas",
-      ativo: true,
-    }
-  );
+  const barbeirosSeed = [
+    { nome: "Lucas", telefone: "(44) 99111-1002", ativo: true },
+    { nome: "Pedro", telefone: "(44) 99111-1003", ativo: true },
+    { nome: "Mateus", telefone: "(44) 99111-1004", ativo: true },
+    { nome: "Joao", telefone: "(44) 99111-1005", ativo: true },
+  ];
+
+  for (const barbeiro of barbeirosSeed) {
+    await upsertOne(
+      barbeiroRepository,
+      { barbearia_id: barbearia.id, nome: barbeiro.nome },
+      {
+        barbearia_id: barbearia.id,
+        nome: barbeiro.nome,
+        telefone: barbeiro.telefone,
+        ativo: barbeiro.ativo,
+      }
+    );
+  }
 
   const servicoCorte = await upsertOne(
     servicoRepository,
@@ -153,6 +178,26 @@ async function runSeed() {
       duracao_min: 20,
     }
   );
+
+  const servicosExtras = [
+    { nome_servico: "Corte + Barba", preco: "70.00", duracao_min: 50 },
+    { nome_servico: "Hidratação Capilar", preco: "35.00", duracao_min: 25 },
+    { nome_servico: "Limpeza de Ouvido/Nariz", preco: "20.00", duracao_min: 10 },
+    { nome_servico: "Tingimento de Barba", preco: "40.00", duracao_min: 30 },
+  ];
+
+  for (const servico of servicosExtras) {
+    await upsertOne(
+      servicoRepository,
+      { barbearia_id: barbearia.id, nome_servico: servico.nome_servico },
+      {
+        barbearia_id: barbearia.id,
+        nome_servico: servico.nome_servico,
+        preco: servico.preco,
+        duracao_min: servico.duracao_min,
+      }
+    );
+  }
 
   const inicio = new Date("2030-01-15T10:00:00.000Z");
 

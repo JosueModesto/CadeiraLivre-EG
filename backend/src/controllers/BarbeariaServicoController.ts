@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { AppDataSource } from "../data-source";
 import { BarbeariaServico } from "../entities/BarbeariaServico";
 
-export class ServicoController {
+export class BarbeariaServicoController {
 	async create(req: Request, res: Response): Promise<Response> {
 		const { barbearia_id, nome_servico, preco, duracao_min } = req.body;
 
@@ -141,4 +141,3 @@ export class ServicoController {
 		}
 	}
 }
-
