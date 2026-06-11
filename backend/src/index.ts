@@ -6,6 +6,7 @@ import { runSeed } from "./seed";
 import { swaggerDocs } from "./swagger";
 import authRoutes from "./routes/auth.routes";
 import usuarioRoutes from "./routes/usuario.routes";
+import cidadeRoutes from "./routes/cidade.routes";
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -15,6 +16,7 @@ const dbRetryDelayMs = Number(process.env.DB_RETRY_DELAY_MS || 3000);
 const apiRoutes = Router();
 apiRoutes.use("/auth", authRoutes);
 apiRoutes.use("/usuarios", usuarioRoutes);
+apiRoutes.use("/cidades", cidadeRoutes);
 
 // CORS Configuration
 app.use(cors({
@@ -28,20 +30,6 @@ app.use(express.json());
 
 // Swagger Documentation
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
-
-// Rotas de health check
-app.get("/health", (_req, res) => {
-  res.json({ status: "ok", service: "backend" });
-});
-
-app.get("/api/ping", async (_req, res) => {
-  try {
-    const result = await AppDataSource.query("SELECT NOW() AS now");
-    res.json({ message: "pong", databaseTime: result[0].now });
-  } catch (error) {
-    res.status(500).json({ message: "database error", error: error.message });
-  }
-});
 
 // Rotas da API
 app.use("/api", apiRoutes);
@@ -58,12 +46,13 @@ async function bootstrap() {
     }
   }
 
-  try {
+  /*try {
     await runSeed();
     console.log("✓ Seed executado com sucesso");
   } catch (error) {
     console.error(`✗ Erro ao executar seed: ${error.message}`);
   }
+  */
 
   app.listen(port, () => {
     console.log(`\n🎉 Backend rodando em http://localhost:${port}`);
