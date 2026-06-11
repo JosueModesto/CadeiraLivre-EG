@@ -1,14 +1,14 @@
-const { AppDataSource } = require("./data-source");
-const { Cidade } = require("./entities/Cidade");
-const { Usuario, TipoUsuario } = require("./entities/Usuario");
-const { Barbearia } = require("./entities/Barbearia");
-const { BarbeariaFuncionamento } = require("./entities/BarbeariaFuncionamento");
-const { Barbeiro } = require("./entities/Barbeiro");
-const { BarbeariaServico } = require("./entities/BarbeariaServico");
-const { Agendamento, StatusAgendamento } = require("./entities/Agendamento");
-const { AgendamentoItem } = require("./entities/AgendamentoItem");
+import { AppDataSource } from "./data-source";
+import { Cidade } from "./entities/Cidade";
+import { Usuario, TipoUsuario } from "./entities/Usuario";
+import { Barbearia } from "./entities/Barbearia";
+import { BarbeariaFuncionamento } from "./entities/BarbeariaFuncionamento";
+import { Barbeiro } from "./entities/Barbeiro";
+import { BarbeariaServico } from "./entities/BarbeariaServico";
+import { Agendamento, StatusAgendamento } from "./entities/Agendamento";
+import { AgendamentoItem } from "./entities/AgendamentoItem";
 
-async function upsertOne(repository, where, payload) {
+async function upsertOne(repository: any, where: any, payload: any) {
   const existing = await repository.findOneBy(where);
 
   if (existing) {
@@ -53,7 +53,7 @@ async function runSeed() {
     {
       nome: "Cliente Demo",
       email: "cliente@cadeiralivre.com",
-      senha: "$2b$10$abcdefghijklmnopqrstuv1234567890abcdefghijklmnopq",
+      senha: "$2a$10$fuKiZhUt9K3p0UpqaulOc.mU31aBBlmmzFFdUGSeIRpi8jHu6uTky",
       telefone: "(44) 99999-0001",
       tipo_usuario: TipoUsuario.CLIENTE,
       cidade_id: cidadePrincipal.id,
@@ -66,7 +66,7 @@ async function runSeed() {
     {
       nome: "Dono Barbearia",
       email: "dono@cadeiralivre.com",
-      senha: "$2b$10$abcdefghijklmnopqrstuv1234567890abcdefghijklmnopq",
+      senha: "$2a$10$fuKiZhUt9K3p0UpqaulOc.mU31aBBlmmzFFdUGSeIRpi8jHu6uTky",
       telefone: "(44) 99999-0002",
       tipo_usuario: TipoUsuario.BARBEARIA,
       cidade_id: cidadeSecundaria.id,
@@ -198,7 +198,7 @@ async function runSeed() {
     }
   );
 
-  console.log("Seed completed successfully.");
+  console.log("✓ Seed executado com sucesso");
 }
 
-module.exports = { runSeed };
+export { runSeed };
