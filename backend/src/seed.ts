@@ -179,6 +179,26 @@ async function runSeed() {
     }
   );
 
+  const servicosExtras = [
+    { nome_servico: "Corte + Barba", preco: "70.00", duracao_min: 50 },
+    { nome_servico: "Hidratação Capilar", preco: "35.00", duracao_min: 25 },
+    { nome_servico: "Limpeza de Ouvido/Nariz", preco: "20.00", duracao_min: 10 },
+    { nome_servico: "Tingimento de Barba", preco: "40.00", duracao_min: 30 },
+  ];
+
+  for (const servico of servicosExtras) {
+    await upsertOne(
+      servicoRepository,
+      { barbearia_id: barbearia.id, nome_servico: servico.nome_servico },
+      {
+        barbearia_id: barbearia.id,
+        nome_servico: servico.nome_servico,
+        preco: servico.preco,
+        duracao_min: servico.duracao_min,
+      }
+    );
+  }
+
   const inicio = new Date("2030-01-15T10:00:00.000Z");
 
   const fim = new Date(inicio);

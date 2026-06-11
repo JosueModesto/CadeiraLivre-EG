@@ -721,5 +721,112 @@ export const swaggerDocs = {
         },
       },
     },
+    "/api/servicos": {
+      post: {
+        summary: "Cria um novo serviço",
+        tags: ["Serviços"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["barbearia_id", "nome_servico", "preco", "duracao_min"],
+                properties: {
+                  barbearia_id: { type: "number", description: "ID da barbearia" },
+                  nome_servico: { type: "string", description: "Nome do serviço" },
+                  preco: { type: "string", description: "Preço do serviço (decimal)" },
+                  duracao_min: { type: "number", description: "Duração em minutos" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": { description: "Serviço criado com sucesso" },
+          "400": { description: "Campos obrigatórios faltando" },
+          "500": { description: "Erro interno no servidor" },
+        },
+      },
+      get: {
+        summary: "Lista todos os serviços",
+        tags: ["Serviços"],
+        responses: {
+          "200": { description: "Lista de serviços" },
+          "500": { description: "Erro interno no servidor" },
+        },
+      },
+    },
+    "/api/servicos/{id}": {
+      get: {
+        summary: "Obtém um serviço específico",
+        tags: ["Serviços"],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "number" },
+            description: "ID do serviço",
+          },
+        ],
+        responses: {
+          "200": { description: "Serviço encontrado" },
+          "404": { description: "Serviço não encontrado" },
+          "500": { description: "Erro interno no servidor" },
+        },
+      },
+      put: {
+        summary: "Atualiza um serviço",
+        tags: ["Serviços"],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "number" },
+            description: "ID do serviço",
+          },
+        ],
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  barbearia_id: { type: "number" },
+                  nome_servico: { type: "string" },
+                  preco: { type: "string" },
+                  duracao_min: { type: "number" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": { description: "Serviço atualizado com sucesso" },
+          "404": { description: "Serviço não encontrado" },
+          "500": { description: "Erro interno no servidor" },
+        },
+      },
+      delete: {
+        summary: "Exclui um serviço",
+        tags: ["Serviços"],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "number" },
+            description: "ID do serviço",
+          },
+        ],
+        responses: {
+          "200": { description: "Serviço excluído com sucesso" },
+          "404": { description: "Serviço não encontrado" },
+          "500": { description: "Erro interno no servidor" },
+        },
+      },
+    },
   },
 };
