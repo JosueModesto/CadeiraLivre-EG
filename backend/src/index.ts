@@ -8,6 +8,7 @@ import authRoutes from "./routes/auth.routes";
 import usuarioRoutes from "./routes/usuario.routes";
 import cidadeRoutes from "./routes/cidade.routes";
 import barbeiroRoutes from "./routes/barbeiro.routes";
+import servicoRoutes from "./routes/servico.routes";
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -19,6 +20,7 @@ apiRoutes.use("/auth", authRoutes);
 apiRoutes.use("/usuarios", usuarioRoutes);
 apiRoutes.use("/cidades", cidadeRoutes);
 apiRoutes.use("/barbeiros", barbeiroRoutes);
+apiRoutes.use("/servicos", servicoRoutes);
 
 // CORS Configuration
 app.use(cors({
