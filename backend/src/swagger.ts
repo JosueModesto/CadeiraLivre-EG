@@ -291,9 +291,7 @@ export const swaggerDocs = {
         },
       },
     },
-  },
-
-  // ================= ROTAS DE CIDADES =================
+    // ================= ROTAS DE CIDADES =================
     "/api/cidades": {
       post: {
         summary: "Cria uma nova cidade",
@@ -478,5 +476,138 @@ export const swaggerDocs = {
           },
         },
       },
+      put: {
+        summary: "Atualiza uma cidade",
+        tags: ["Cidades"],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "number" },
+            description: "ID da cidade",
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  nome: { type: "string", description: "Nome da cidade" },
+                  estado: { type: "string", description: "Sigla do estado (Ex: SP)" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Cidade atualizada com sucesso",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Cidade atualizada com sucesso!" },
+                    cidade: {
+                      type: "object",
+                      properties: {
+                        id: { type: "number" },
+                        nome: { type: "string" },
+                        estado: { type: "string" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "404": {
+            description: "Cidade não encontrada",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Cidade não encontrada" },
+                  },
+                },
+              },
+            },
+          },
+          "500": {
+            description: "Erro interno no servidor",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Erro interno no servidor" },
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      delete: {
+        summary: "Exclui uma cidade",
+        tags: ["Cidades"],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "number" },
+            description: "ID da cidade",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Cidade excluída com sucesso",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Cidade excluída com sucesso!" },
+                  },
+                },
+              },
+            },
+          },
+          "404": {
+            description: "Cidade não encontrada",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Cidade não encontrada" },
+                  },
+                },
+              },
+            },
+          },
+          "500": {
+            description: "Erro interno no servidor",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Erro interno no servidor" },
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     },
+  },
 };

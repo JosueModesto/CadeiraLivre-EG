@@ -88,4 +88,65 @@ async getById(req: Request, res: Response): Promise<Response> {
       });
     }
   }
+
+    async update(req: Request, res: Response): Promise<Response> {
+        try {
+            const { id } = req.params;
+            const { nome, estado } = req.body;
+
+            const cidadeRepository = AppDataSource.getRepository(Cidade);
+            const cidade = await cidadeRepository.findOne({
+                where: { id: Number(id) },
+            });
+
+            if (!cidade) {
+                return res.status(404).json({
+                    message: "Cidade não encontrada",
+                });
+            }
+
+            if (nome) cidade.nome = nome;
+            if (estado) cidade.estado = estado.toUpperCase();
+
+            const cidadeAtualizada = await cidadeRepository.save(cidade);
+
+            return res.status(200).json({
+                message: "Cidade atualizada com sucesso!",
+                cidade: cidadeAtualizada,
+            });
+        } catch (error: any) {
+            return res.status(500).json({
+                message: "Erro interno no servidor",
+                error: error.message,
+            });
+        }
+    }
+
+    async delete(req: Request, res: Response): Promise<Response> {
+        try {
+            const { id } = req.params;
+
+            const cidadeRepository = AppDataSource.getRepository(Cidade);
+            const cidade = await cidadeRepository.findOne({
+                where: { id: Number(id) },
+            });
+
+            if (!cidade) {
+                return res.status(404).json({
+                    message: "Cidade não encontrada",
+                });
+            }
+
+            await cidadeRepository.remove(cidade);
+
+            return res.status(200).json({
+                message: "Cidade excluída com sucesso!",
+            });
+        } catch (error: any) {
+            return res.status(500).json({
+                message: "Erro interno no servidor",
+                error: error.message,
+            });
+        }
+    }
 }
