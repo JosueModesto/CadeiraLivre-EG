@@ -609,5 +609,117 @@ export const swaggerDocs = {
         },
       },
     },
+    // ================= ROTAS DE BARBEIROS =================
+    "/api/barbeiros": {
+      post: {
+        summary: "Cria um novo barbeiro",
+        tags: ["Barbeiros"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["barbearia_id", "nome", "telefone"],
+                properties: {
+                  barbearia_id: { type: "number", description: "ID da barbearia" },
+                  nome: { type: "string", description: "Nome do barbeiro" },
+                  telefone: { type: "string", description: "Telefone do barbeiro" },
+                  ativo: { type: "boolean", description: "Status do barbeiro" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Barbeiro criado com sucesso",
+          },
+          "400": { description: "Campos obrigatórios faltando" },
+          "500": { description: "Erro interno no servidor" },
+        },
+      },
+      get: {
+        summary: "Lista todos os barbeiros",
+        tags: ["Barbeiros"],
+        responses: {
+          "200": {
+            description: "Lista de barbeiros",
+          },
+          "500": { description: "Erro interno no servidor" },
+        },
+      },
+    },
+    "/api/barbeiros/{id}": {
+      get: {
+        summary: "Obtém um barbeiro específico",
+        tags: ["Barbeiros"],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "number" },
+            description: "ID do barbeiro",
+          },
+        ],
+        responses: {
+          "200": { description: "Barbeiro encontrado" },
+          "404": { description: "Barbeiro não encontrado" },
+          "500": { description: "Erro interno no servidor" },
+        },
+      },
+      put: {
+        summary: "Atualiza um barbeiro",
+        tags: ["Barbeiros"],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "number" },
+            description: "ID do barbeiro",
+          },
+        ],
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  barbearia_id: { type: "number" },
+                  nome: { type: "string" },
+                  telefone: { type: "string" },
+                  ativo: { type: "boolean" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": { description: "Barbeiro atualizado com sucesso" },
+          "404": { description: "Barbeiro não encontrado" },
+          "500": { description: "Erro interno no servidor" },
+        },
+      },
+      delete: {
+        summary: "Exclui um barbeiro",
+        tags: ["Barbeiros"],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "number" },
+            description: "ID do barbeiro",
+          },
+        ],
+        responses: {
+          "200": { description: "Barbeiro excluído com sucesso" },
+          "404": { description: "Barbeiro não encontrado" },
+          "500": { description: "Erro interno no servidor" },
+        },
+      },
+    },
   },
 };

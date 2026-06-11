@@ -47,6 +47,20 @@ async function runSeed() {
     { nome: "Maringa", estado: "PR" }
   );
 
+  const cidadesExtras = [
+    { nome: "Curitiba", estado: "PR" },
+    { nome: "Londrina", estado: "PR" },
+    { nome: "Cascavel", estado: "PR" },
+  ];
+
+  for (const cidade of cidadesExtras) {
+    await upsertOne(
+      cidadeRepository,
+      { nome: cidade.nome, estado: cidade.estado },
+      { nome: cidade.nome, estado: cidade.estado }
+    );
+  }
+
   const cliente = await upsertOne(
     usuarioRepository,
     { email: "cliente@cadeiralivre.com" },
@@ -118,19 +132,30 @@ async function runSeed() {
     {
       barbearia_id: barbearia.id,
       nome: "Rafael",
+      telefone: "(44) 99111-1001",
       ativo: true,
     }
   );
 
-  await upsertOne(
-    barbeiroRepository,
-    { barbearia_id: barbearia.id, nome: "Lucas" },
-    {
-      barbearia_id: barbearia.id,
-      nome: "Lucas",
-      ativo: true,
-    }
-  );
+  const barbeirosSeed = [
+    { nome: "Lucas", telefone: "(44) 99111-1002", ativo: true },
+    { nome: "Pedro", telefone: "(44) 99111-1003", ativo: true },
+    { nome: "Mateus", telefone: "(44) 99111-1004", ativo: true },
+    { nome: "Joao", telefone: "(44) 99111-1005", ativo: true },
+  ];
+
+  for (const barbeiro of barbeirosSeed) {
+    await upsertOne(
+      barbeiroRepository,
+      { barbearia_id: barbearia.id, nome: barbeiro.nome },
+      {
+        barbearia_id: barbearia.id,
+        nome: barbeiro.nome,
+        telefone: barbeiro.telefone,
+        ativo: barbeiro.ativo,
+      }
+    );
+  }
 
   const servicoCorte = await upsertOne(
     servicoRepository,

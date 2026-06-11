@@ -27,6 +27,9 @@ export class Barbeiro {
   @Column({ type: "varchar", length: 100, nullable: false })
   nome!: string;
 
+  @Column({ type: "varchar", length: 15, nullable: false })
+  telefone!: string;
+
   @Column({ type: "boolean", nullable: false, default: true })
   ativo!: boolean;
 
