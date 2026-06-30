@@ -37,10 +37,24 @@ export class ServicoController {
 
 	async getAll(req: Request, res: Response): Promise<Response> {
 		try {
+			const { barbearia_id } = req.query;
 			const servicoRepository = AppDataSource.getRepository(BarbeariaServico);
-			const servicos = await servicoRepository.find({
-				select: ["id", "barbearia_id", "nome_servico", "preco", "duracao_min"],
-			});
+			
+			let query = servicoRepository.createQueryBuilder("servico");
+			
+			if (barbearia_id) {
+				query = query.where("servico.barbearia_id = :barbearia_id", {
+					barbearia_id: Number(barbearia_id),
+				});
+			}
+			
+			const servicos = await query.select([
+				"servico.id",
+				"servico.barbearia_id",
+				"servico.nome_servico",
+				"servico.preco",
+				"servico.duracao_min",
+			]).getMany();
 
 			return res.status(200).json({
 				servicos,
