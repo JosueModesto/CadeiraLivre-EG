@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { BarbeariaServicoController } from "../controllers/BarbeariaServicoController";
+import { ServicoController } from "../controllers/ServicoController";
 
 const router = Router();
-const barbeariaServicoController = new BarbeariaServicoController();
+const barbeariaServicoController = new ServicoController();
 
 router.post("/", (req, res) => barbeariaServicoController.create(req, res));
 
