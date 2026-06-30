@@ -9,6 +9,8 @@ import usuarioRoutes from "./routes/usuario.routes";
 import cidadeRoutes from "./routes/cidade.routes";
 import barbeiroRoutes from "./routes/barbeiro.routes";
 import servicoRoutes from "./routes/servico.routes";
+import barbeariaRoutes from "./routes/barbearia.routes";
+import agendamentoRoutes from "./routes/agendamento.routes";
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -21,6 +23,8 @@ apiRoutes.use("/usuarios", usuarioRoutes);
 apiRoutes.use("/cidades", cidadeRoutes);
 apiRoutes.use("/barbeiros", barbeiroRoutes);
 apiRoutes.use("/servicos", servicoRoutes);
+apiRoutes.use("/barbearias", barbeariaRoutes);
+apiRoutes.use("/agendamentos", agendamentoRoutes);
 
 // CORS Configuration
 app.use(cors({
@@ -44,7 +48,8 @@ async function bootstrap() {
       await AppDataSource.initialize();
       console.log("✓ TypeORM conectado ao PostgreSQL");
     } catch (error) {
-      console.error(`✗ Erro ao conectar ao banco: ${error.message}`);
+      const err = error as Error;
+      console.error(`✗ Erro ao conectar ao banco: ${err.message}`);
       console.log(`  Tentando novamente em ${dbRetryDelayMs}ms...`);
       await new Promise((resolve) => setTimeout(resolve, dbRetryDelayMs));
     }
@@ -52,9 +57,9 @@ async function bootstrap() {
 
   try {
     await runSeed();
-    console.log("✓ Seed executado com sucesso");
   } catch (error) {
-    console.error(`✗ Erro ao executar seed: ${error.message}`);
+    const err = error as Error;
+    console.error(`✗ Erro ao executar seed: ${err.message}`);
   }
   
 
