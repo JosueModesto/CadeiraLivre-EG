@@ -8,6 +8,7 @@ import {
 } from "typeorm";
 import { Agendamento } from "./Agendamento";
 import { Barbearia } from "./Barbearia";
+import { BarbeiroDisponibilidade } from "./BarbeiroDisponibilidade";
 
 @Entity("barbeiros")
 export class Barbeiro {
@@ -35,4 +36,7 @@ export class Barbeiro {
 
   @OneToMany(() => Agendamento, (agendamento) => agendamento.barbeiro)
   agendamentos?: Agendamento[];
+
+  @OneToMany(() => BarbeiroDisponibilidade, (disponibilidade) => disponibilidade.barbeiro)
+  disponibilidades?: BarbeiroDisponibilidade[];
 }
