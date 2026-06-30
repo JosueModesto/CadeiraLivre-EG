@@ -6,7 +6,8 @@
     "main": "src/index.ts",
     "scripts": {
         "dev": "nodemon --exec tsx src/index.ts",
-        "start": "tsx src/index.ts"
+        "start": "tsx src/index.ts",
+        "seed": "tsx src/seed.ts"
     },
     "dependencies": {
         "@types/bcryptjs": "^2.4.6",

@@ -721,6 +721,71 @@ export const swaggerDocs = {
         },
       },
     },
+    "/api/barbeiros/{id}/disponibilidade": {
+      get: {
+        summary: "Lista os intervalos de disponibilidade configurados para o barbeiro",
+        tags: ["Barbeiros"],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "number" },
+            description: "ID do barbeiro",
+          },
+        ],
+        responses: {
+          "200": { description: "Disponibilidades do barbeiro" },
+          "404": { description: "Barbeiro não encontrado" },
+        },
+      },
+      put: {
+        summary: "Define os intervalos de disponibilidade por dia da semana para o barbeiro",
+        tags: ["Barbeiros"],
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "number" },
+            description: "ID do barbeiro",
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  disponibilidades: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      required: ["dia_semana", "esta_disponivel"],
+                      properties: {
+                        dia_semana: { type: "number", minimum: 0, maximum: 6 },
+                        esta_disponivel: { type: "boolean" },
+                        hora_inicio: { type: "string", example: "08:00" },
+                        hora_fim: { type: "string", example: "12:00" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": { description: "Disponibilidade atualizada" },
+          "400": { description: "Payload inválido" },
+          "401": { description: "Não autenticado" },
+          "403": { description: "Sem permissão" },
+          "404": { description: "Barbeiro não encontrado" },
+        },
+      },
+    },
     "/api/servicos": {
       post: {
         summary: "Cria um novo serviço",
@@ -826,6 +891,217 @@ export const swaggerDocs = {
           "404": { description: "Serviço não encontrado" },
           "500": { description: "Erro interno no servidor" },
         },
+      },
+    },
+    "/api/agendamentos": {
+      post: {
+        summary: "Cria um novo agendamento para o cliente autenticado",
+        tags: ["Agendamentos"],
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["barbearia_id", "barbeiro_id", "servico_ids", "data_hora_inicio"],
+                properties: {
+                  barbearia_id: { type: "number" },
+                  barbeiro_id: { type: "number" },
+                  servico_ids: { type: "array", items: { type: "number" } },
+                  data_hora_inicio: { type: "string", format: "date-time" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": { description: "Agendamento realizado com sucesso" },
+          "400": { description: "Dados inválidos ou horário fora do funcionamento" },
+          "401": { description: "Não autenticado" },
+          "404": { description: "Barbearia ou barbeiro não encontrado" },
+          "409": { description: "Horário já ocupado para esse barbeiro" },
+        },
+      },
+    },
+    "/api/agendamentos/my-appointments": {
+      get: {
+        summary: "Lista os agendamentos do cliente autenticado",
+        tags: ["Agendamentos"],
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Agendamentos do cliente" },
+          "401": { description: "Não autenticado" },
+        },
+      },
+    },
+    "/api/agendamentos/available-slots": {
+      get: {
+        summary: "Lista horários disponíveis em blocos fixos de 60 minutos",
+        tags: ["Agendamentos"],
+        parameters: [
+          { name: "barbearia_id", in: "query", required: true, schema: { type: "number" } },
+          { name: "barbeiro_id", in: "query", required: true, schema: { type: "number" } },
+          {
+            name: "data",
+            in: "query",
+            required: true,
+            schema: { type: "string", example: "2026-07-01" },
+          },
+        ],
+        responses: {
+          "200": { description: "Lista de horários disponíveis" },
+          "400": { description: "Parâmetros inválidos" },
+          "404": { description: "Barbearia não encontrada" },
+        },
+      },
+    },
+    "/api/agendamentos/check-availability": {
+      get: {
+        summary: "Verifica se um horário específico está disponível para o barbeiro",
+        tags: ["Agendamentos"],
+        parameters: [
+          { name: "barbearia_id", in: "query", required: true, schema: { type: "number" } },
+          { name: "barbeiro_id", in: "query", required: true, schema: { type: "number" } },
+          {
+            name: "data_hora_inicio",
+            in: "query",
+            required: true,
+            schema: { type: "string", format: "date-time" },
+          },
+        ],
+        responses: {
+          "200": { description: "Disponibilidade retornada" },
+          "400": { description: "Parâmetros inválidos" },
+        },
+      },
+    },
+    "/api/barbearias/{id}/agendamento-config": {
+      get: {
+        summary: "Obtém configuração de agendamento da barbearia (funcionamento e intervalo)",
+        tags: ["Barbearias"],
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "number" } },
+        ],
+        responses: {
+          "200": { description: "Configuração carregada" },
+          "401": { description: "Não autenticado" },
+          "404": { description: "Barbearia não encontrada para o usuário" },
+        },
+      },
+    },
+    "/api/barbearias/{id}/agendamentos": {
+      get: {
+        summary: "Lista os agendamentos de um barbeiro da barbearia em um dia específico",
+        tags: ["Barbearias"],
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "number" } },
+          { name: "barbeiro_id", in: "query", required: true, schema: { type: "number" } },
+          { name: "data", in: "query", required: true, schema: { type: "string", example: "2026-07-01" } },
+        ],
+        responses: {
+          "200": { description: "Agendamentos do barbeiro no dia" },
+          "400": { description: "Parâmetros inválidos" },
+          "401": { description: "Não autenticado" },
+          "404": { description: "Barbearia não encontrada para o usuário" },
+        },
+      },
+    },
+    "/api/barbearias/{id}/agendamentos/proximos": {
+      get: {
+        summary: "Lista os próximos agendamentos da barbearia considerando todos os barbeiros",
+        tags: ["Barbearias"],
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "number" } },
+        ],
+        responses: {
+          "200": { description: "Próximos agendamentos" },
+          "401": { description: "Não autenticado" },
+          "404": { description: "Barbearia não encontrada para o usuário" },
+        },
+      },
+    },
+    "/api/barbearias/{id}/funcionamento": {
+      put: {
+        summary: "Define horários de funcionamento por dia da semana",
+        tags: ["Barbearias"],
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "number" } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  funcionamento: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      required: ["dia_semana", "esta_aberto"],
+                      properties: {
+                        dia_semana: { type: "number", minimum: 0, maximum: 6 },
+                        esta_aberto: { type: "boolean" },
+                        hora_abertura: { type: "string", example: "09:00" },
+                        hora_fechamento: { type: "string", example: "18:00" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": { description: "Funcionamento atualizado" },
+          "400": { description: "Payload inválido" },
+          "401": { description: "Não autenticado" },
+          "404": { description: "Barbearia não encontrada para o usuário" },
+        },
+      },
+    },
+    "/api/barbearias/{id}/intervalo": {
+      put: {
+        summary: "Define o intervalo-base de agendamento (fixo em 60 minutos)",
+        tags: ["Barbearias"],
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "number" } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["intervalo_base"],
+                properties: {
+                  intervalo_base: { type: "number", example: 60 },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": { description: "Intervalo atualizado" },
+          "400": { description: "Intervalo inválido" },
+          "401": { description: "Não autenticado" },
+          "404": { description: "Barbearia não encontrada para o usuário" },
+        },
+      },
+    },
+  },
+  components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: "http",
+        scheme: "bearer",
+        bearerFormat: "JWT",
       },
     },
   },
