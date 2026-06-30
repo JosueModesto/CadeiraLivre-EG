@@ -39,14 +39,38 @@ export default function Dashboard() {
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-            <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-              <h3 className="font-semibold text-blue-900 mb-2">Agendamentos</h3>
-              <p className="text-blue-700">Gerenciar seus agendamentos</p>
-            </div>
-            <div className="bg-green-50 p-6 rounded-lg border border-green-200">
-              <h3 className="font-semibold text-green-900 mb-2">Barbearias</h3>
-              <p className="text-green-700">Ver barbearias disponíveis</p>
-            </div>
+            {user?.tipo_usuario === "barbearia" ? (
+              <>
+                <button
+                  onClick={() => navigate("/barbearia")}
+                  className="bg-amber-50 p-6 rounded-lg border border-amber-200 hover:shadow-lg hover:bg-amber-100 transition cursor-pointer text-left"
+                >
+                  <h3 className="font-semibold text-amber-900 mb-2">Minha Barbearia</h3>
+                  <p className="text-amber-700">Configurar funcionamento, barbeiros e disponibilidade</p>
+                </button>
+                <button
+                  onClick={() => navigate("/barbearia/agendamentos")}
+                  className="bg-orange-50 p-6 rounded-lg border border-orange-200 hover:shadow-lg hover:bg-orange-100 transition cursor-pointer text-left"
+                >
+                  <h3 className="font-semibold text-orange-900 mb-2">Agenda da Barbearia</h3>
+                  <p className="text-orange-700">Ver agenda por barbeiro e próximos atendimentos</p>
+                </button>
+              </>
+            ) : null}
+            <button
+              onClick={() => navigate("/novo-agendamento")}
+              className="bg-blue-50 p-6 rounded-lg border border-blue-200 hover:shadow-lg hover:bg-blue-100 transition cursor-pointer text-left"
+            >
+              <h3 className="font-semibold text-blue-900 mb-2">Novo Agendamento</h3>
+              <p className="text-blue-700">Agendar um novo horário</p>
+            </button>
+            <button
+              onClick={() => navigate("/agendamentos")}
+              className="bg-green-50 p-6 rounded-lg border border-green-200 hover:shadow-lg hover:bg-green-100 transition cursor-pointer text-left"
+            >
+              <h3 className="font-semibold text-green-900 mb-2">Meus Agendamentos</h3>
+              <p className="text-green-700">Gerenciar meus agendamentos</p>
+            </button>
             <div className="bg-purple-50 p-6 rounded-lg border border-purple-200">
               <h3 className="font-semibold text-purple-900 mb-2">Perfil</h3>
               <p className="text-purple-700">Editar meu perfil</p>
