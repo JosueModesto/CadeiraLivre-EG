@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import { AppDataSource } from "../data-source";
-import { Usuario } from "../entities/Usuario";
+import { TipoUsuario, Usuario } from "../entities/Usuario";
 
 export class UsuarioController {
   async create(req: Request, res: Response): Promise<Response> {
@@ -17,6 +17,12 @@ export class UsuarioController {
       if (senha.length < 6) {
         return res.status(400).json({
           message: "Senha deve ter no mínimo 6 caracteres",
+        });
+      }
+
+      if (tipo_usuario === TipoUsuario.ADMINISTRADOR) {
+        return res.status(403).json({
+          message: "Não é permitido criar usuário administrador por esta rota",
         });
       }
 
@@ -128,6 +134,11 @@ export class UsuarioController {
       // Atualizar campos
       if (nome) usuario.nome = nome;
       if (telefone) usuario.telefone = telefone;
+      if (tipo_usuario === TipoUsuario.ADMINISTRADOR) {
+        return res.status(403).json({
+          message: "Não é permitido promover usuário para administrador por esta rota",
+        });
+      }
       if (tipo_usuario) usuario.tipo_usuario = tipo_usuario;
       if (cidade_id !== undefined) usuario.cidade_id = cidade_id;
       if (senha) usuario.senha = await bcrypt.hash(senha, 10);

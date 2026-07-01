@@ -23,7 +23,7 @@ services:
     container_name: cadeira_livre_backend
     restart: always
     ports:
-      - "3000:3000"
+      - "3001:3000"
     depends_on:
       db:
         condition: service_healthy
@@ -37,6 +37,7 @@ services:
       DB_LOGGING: "false"
       DB_RUN_SEED: "true"
       PORT: 3000
+      PUBLIC_PORT: 3001
       JWT_SECRET: supersecret
 
   frontend:
@@ -45,6 +46,8 @@ services:
     container_name: cadeira_livre_frontend
     ports:
       - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:3001
     depends_on:
       - backend
 

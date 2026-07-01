@@ -1,10 +1,13 @@
 import { Router } from "express";
 import { ServicoController } from "../controllers/ServicoController";
+import { authenticateToken, requireAdmin } from "../middlewares/auth.middleware";
 
 const router = Router();
 const servicoController = new ServicoController();
 
-router.post("/", (req, res) => servicoController.create(req, res));
+router.post("/", authenticateToken, requireAdmin, (req, res) =>
+	servicoController.create(req, res)
+);
 
 router.get("/", (req, res) => servicoController.getAll(req, res));
 

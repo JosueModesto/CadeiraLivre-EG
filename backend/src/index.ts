@@ -14,6 +14,7 @@ import agendamentoRoutes from "./routes/agendamento.routes";
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
+const publicPort = Number(process.env.PUBLIC_PORT || port);
 const dbRetryDelayMs = Number(process.env.DB_RETRY_DELAY_MS || 3000);
 
 // Agregar rotas
@@ -64,8 +65,8 @@ async function bootstrap() {
   
 
   app.listen(port, () => {
-    console.log(`\n🎉 Backend rodando em http://localhost:${port}`);
-    console.log(`📚 Documentação Swagger: http://localhost:${port}/api-docs\n`);
+    console.log(`\n🎉 Backend rodando em http://localhost:${publicPort}`);
+    console.log(`📚 Documentação Swagger: http://localhost:${publicPort}/api-docs\n`);
   });
 }
 
