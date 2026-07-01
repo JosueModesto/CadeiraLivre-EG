@@ -66,10 +66,10 @@ async function runSeed(force = false) {
 
   const cliente = await upsertOne(
     usuarioRepository,
-    { email: "cliente@cadeiralivre.com" },
+    { email: "cliente@cl.com" },
     {
       nome: "Cliente Demo",
-      email: "cliente@cadeiralivre.com",
+      email: "cliente@cl.com",
       senha: "$2a$10$fuKiZhUt9K3p0UpqaulOc.mU31aBBlmmzFFdUGSeIRpi8jHu6uTky",
       telefone: "(44) 99999-0001",
       tipo_usuario: TipoUsuario.CLIENTE,
@@ -79,14 +79,27 @@ async function runSeed(force = false) {
 
   const dono = await upsertOne(
     usuarioRepository,
-    { email: "dono@cadeiralivre.com" },
+    { email: "dono@cl.com" },
     {
       nome: "Dono Barbearia",
-      email: "dono@cadeiralivre.com",
+      email: "dono@cl.com",
       senha: "$2a$10$fuKiZhUt9K3p0UpqaulOc.mU31aBBlmmzFFdUGSeIRpi8jHu6uTky",
       telefone: "(44) 99999-0002",
       tipo_usuario: TipoUsuario.BARBEARIA,
       cidade_id: cidadeSecundaria.id,
+    }
+  );
+
+  await upsertOne(
+    usuarioRepository,
+    { email: "admin@cl.com" },
+    {
+      nome: "Administrador",
+      email: "admin@cl.com",
+      senha: "$2a$10$fr9JUp3Koo928x7Sl8v6CeEzBrN/yu.9vY3z9nQfzt3V9GX1PVP1S",
+      telefone: "(44) 99999-0000",
+      tipo_usuario: TipoUsuario.ADMINISTRADOR,
+      cidade_id: cidadePrincipal.id,
     }
   );
 

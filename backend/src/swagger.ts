@@ -7,7 +7,7 @@ export const swaggerDocs = {
   },
   servers: [
     {
-      url: "http://localhost:3000",
+      url: "http://localhost:3001",
       description: "Desenvolvimento",
     },
   ],
@@ -28,7 +28,7 @@ export const swaggerDocs = {
                   email: { type: "string", description: "Email do usuário" },
                   senha: { type: "string", description: "Senha (mínimo 6 caracteres)" },
                   telefone: { type: "string", description: "Telefone do usuário" },
-                  tipo_usuario: { type: "string", enum: ["cliente", "barbearia"], description: "Tipo de usuário" },
+                  tipo_usuario: { type: "string", enum: ["cliente", "barbearia", "administrador"], description: "Tipo de usuário" },
                   cidade_id: { type: "number", description: "ID da cidade (opcional)" },
                 },
               },
@@ -122,7 +122,7 @@ export const swaggerDocs = {
                   email: { type: "string", description: "Email único do usuário" },
                   senha: { type: "string", description: "Senha (mínimo 6 caracteres)" },
                   telefone: { type: "string", description: "Telefone do usuário" },
-                  tipo_usuario: { type: "string", enum: ["cliente", "barbearia"], description: "Tipo de usuário" },
+                  tipo_usuario: { type: "string", enum: ["cliente", "barbearia", "administrador"], description: "Tipo de usuário" },
                   cidade_id: { type: "number", description: "ID da cidade (opcional)" },
                 },
               },
