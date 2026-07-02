@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { AppDataSource } from "../data-source";
 import { BarbeariaServico } from "../entities/BarbeariaServico";
+import { TipoUsuario } from "../entities/Usuario";
+import { AuthRequest } from "../middlewares/auth.middleware";
 
 export class ServicoController {
 	async create(req: Request, res: Response): Promise<Response> {
@@ -92,7 +94,7 @@ export class ServicoController {
 		}
 	}
 
-	async update(req: Request, res: Response): Promise<Response> {
+	async update(req: AuthRequest, res: Response): Promise<Response> {
 		try {
 			const { id } = req.params;
 			const { barbearia_id, nome_servico, preco, duracao_min } = req.body;
@@ -100,6 +102,7 @@ export class ServicoController {
 			const servicoRepository = AppDataSource.getRepository(BarbeariaServico);
 			const servico = await servicoRepository.findOne({
 				where: { id: Number(id) },
+				relations: ["barbearia"],
 			});
 
 			if (!servico) {
@@ -108,10 +111,32 @@ export class ServicoController {
 				});
 			}
 
-			if (barbearia_id !== undefined) servico.barbearia_id = barbearia_id;
-			if (nome_servico) servico.nome_servico = nome_servico;
-			if (preco) servico.preco = preco;
-			if (duracao_min !== undefined) servico.duracao_min = duracao_min;
+			if (!req.user) {
+				return res.status(401).json({
+					message: "Usuário não autenticado",
+				});
+			}
+
+			if (req.user.tipo_usuario === TipoUsuario.BARBEARIA) {
+				if (servico.barbearia.usuario_id !== req.user.id) {
+					return res.status(403).json({
+						message: "Você só pode alterar o preço dos serviços da sua barbearia",
+					});
+				}
+
+				if (preco === undefined || nome_servico !== undefined || duracao_min !== undefined || barbearia_id !== undefined) {
+					return res.status(403).json({
+						message: "A barbearia pode alterar apenas o preço do serviço",
+					});
+				}
+
+				servico.preco = preco;
+			} else {
+				if (barbearia_id !== undefined) servico.barbearia_id = barbearia_id;
+				if (nome_servico) servico.nome_servico = nome_servico;
+				if (preco) servico.preco = preco;
+				if (duracao_min !== undefined) servico.duracao_min = duracao_min;
+			}
 
 			const servicoAtualizado = await servicoRepository.save(servico);
 

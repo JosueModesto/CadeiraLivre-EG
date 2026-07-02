@@ -3,15 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { barbeariaService } from "../services/barbeariaService";
 import { barbeiroService } from "../services/barbeiroService";
+import { servicoService } from "../services/servicoService";
+import Navbar from "../components/Navbar";
 
 const DIAS_SEMANA = [
   { value: 0, label: "Domingo" },
   { value: 1, label: "Segunda" },
-  { value: 2, label: "Terca" },
+  { value: 2, label: "Terça" },
   { value: 3, label: "Quarta" },
   { value: 4, label: "Quinta" },
   { value: 5, label: "Sexta" },
-  { value: 6, label: "Sabado" },
+  { value: 6, label: "Sábado" },
 ];
 
 function disponibilidadeInicial() {
@@ -30,6 +32,21 @@ function funcionamentoInicial() {
   }));
 }
 
+function EstadoCentral({ titulo, descricao, onVoltar }) {
+  return (
+    <div className="app-shell">
+      <Navbar onBack={onVoltar} />
+      <main className="container page">
+        <div className="card empty">
+          <h1 className="card-title">{titulo}</h1>
+          {descricao ? <p className="muted mt-2">{descricao}</p> : null}
+          <button className="btn btn--primary mt-6" onClick={onVoltar}>Voltar</button>
+        </div>
+      </main>
+    </div>
+  );
+}
+
 export default function Barbearia() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -37,6 +54,8 @@ export default function Barbearia() {
   const [savingFuncionamento, setSavingFuncionamento] = useState(false);
   const [savingBarbeiro, setSavingBarbeiro] = useState(false);
   const [savingDisponibilidade, setSavingDisponibilidade] = useState(false);
+  const [mostrarFuncionamento, setMostrarFuncionamento] = useState(false);
+  const [mostrarDisponibilidade, setMostrarDisponibilidade] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [barbearia, setBarbearia] = useState(null);
@@ -45,32 +64,31 @@ export default function Barbearia() {
   const [barbeiroSelecionadoId, setBarbeiroSelecionadoId] = useState("");
   const [disponibilidade, setDisponibilidade] = useState(disponibilidadeInicial());
   const [novoBarbeiro, setNovoBarbeiro] = useState({ nome: "", telefone: "", ativo: true });
+  const [servicos, setServicos] = useState([]);
+  const [savingPrecoServicoId, setSavingPrecoServicoId] = useState(null);
 
   useEffect(() => {
     async function carregar() {
       setLoading(true);
       setError("");
-
       try {
         const response = await barbeariaService.getAll();
         const encontrada = (response.barbearias || []).find((item) => item.usuario_id === user?.id);
-
         if (!encontrada) {
           setBarbearia(null);
           return;
         }
-
         setBarbearia(encontrada);
 
-        const [configResponse, barbeirosResponse] = await Promise.all([
+        const [configResponse, barbeirosResponse, servicosResponse] = await Promise.all([
           barbeariaService.getAgendamentoConfig(encontrada.id),
           barbeiroService.getAll({ barbearia_id: encontrada.id }),
+          servicoService.getAll({ barbearia_id: encontrada.id }),
         ]);
 
-        const mapaFuncionamento = new Map(
-          (configResponse.funcionamento || []).map((item) => [item.dia_semana, item])
-        );
+        setServicos(servicosResponse.servicos || []);
 
+        const mapaFuncionamento = new Map((configResponse.funcionamento || []).map((item) => [item.dia_semana, item]));
         setFuncionamento(
           DIAS_SEMANA.map((dia) => {
             const atual = mapaFuncionamento.get(dia.value);
@@ -85,20 +103,16 @@ export default function Barbearia() {
 
         const listaBarbeiros = barbeirosResponse.barbeiros || [];
         setBarbeiros(listaBarbeiros);
-
         if (listaBarbeiros.length > 0) {
           setBarbeiroSelecionadoId(String(listaBarbeiros[0].id));
         }
       } catch (err) {
-        setError(err.response?.data?.message || "Erro ao carregar dados da barbearia");
+        setError(err.response?.data?.message || "Erro ao carregar dados da barbearia.");
       } finally {
         setLoading(false);
       }
     }
-
-    if (user?.id) {
-      carregar();
-    }
+    if (user?.id) carregar();
   }, [user?.id]);
 
   useEffect(() => {
@@ -107,21 +121,14 @@ export default function Barbearia() {
         setDisponibilidade(disponibilidadeInicial());
         return;
       }
-
       try {
         const response = await barbeiroService.getDisponibilidade(barbeiroSelecionadoId);
-        const agrupado = disponibilidadeInicial();
-
-        DIAS_SEMANA.forEach((dia) => {
-          agrupado[dia.value] = [];
-        });
+        const agrupado = {};
+        DIAS_SEMANA.forEach((dia) => { agrupado[dia.value] = []; });
 
         (response.disponibilidades || []).forEach((item) => {
           const dia = Number(item.dia_semana);
-          if (!agrupado[dia]) {
-            agrupado[dia] = [];
-          }
-
+          if (!agrupado[dia]) agrupado[dia] = [];
           agrupado[dia].push({
             hora_inicio: item.hora_inicio ? String(item.hora_inicio).slice(0, 5) : "08:00",
             hora_fim: item.hora_fim ? String(item.hora_fim).slice(0, 5) : "18:00",
@@ -137,27 +144,22 @@ export default function Barbearia() {
 
         setDisponibilidade(agrupado);
       } catch (err) {
-        setError(err.response?.data?.message || "Erro ao carregar disponibilidade do barbeiro");
+        setError(err.response?.data?.message || "Erro ao carregar disponibilidade do barbeiro.");
       }
     }
-
     carregarDisponibilidade();
   }, [barbeiroSelecionadoId]);
 
   function atualizarFuncionamento(diaSemana, campo, valor) {
     setFuncionamento((current) =>
-      current.map((item) =>
-        item.dia_semana === diaSemana ? { ...item, [campo]: valor } : item
-      )
+      current.map((item) => (item.dia_semana === diaSemana ? { ...item, [campo]: valor } : item))
     );
   }
 
   function atualizarIntervalo(diaSemana, index, campo, valor) {
     setDisponibilidade((current) => ({
       ...current,
-      [diaSemana]: current[diaSemana].map((item, itemIndex) =>
-        itemIndex === index ? { ...item, [campo]: valor } : item
-      ),
+      [diaSemana]: current[diaSemana].map((item, i) => (i === index ? { ...item, [campo]: valor } : item)),
     }));
   }
 
@@ -171,23 +173,21 @@ export default function Barbearia() {
   function removerIntervalo(diaSemana, index) {
     setDisponibilidade((current) => ({
       ...current,
-      [diaSemana]: current[diaSemana].filter((_, itemIndex) => itemIndex !== index),
+      [diaSemana]: current[diaSemana].filter((_, i) => i !== index),
     }));
   }
 
   async function salvarFuncionamento() {
     if (!barbearia) return;
-
     setSavingFuncionamento(true);
     setError("");
     setSuccess("");
-
     try {
       await barbeariaService.setFuncionamento(barbearia.id, { funcionamento });
       await barbeariaService.setIntervalo(barbearia.id, { intervalo_base: 60 });
       setSuccess("Funcionamento salvo com sucesso.");
     } catch (err) {
-      setError(err.response?.data?.message || "Erro ao salvar funcionamento");
+      setError(err.response?.data?.message || "Erro ao salvar funcionamento.");
     } finally {
       setSavingFuncionamento(false);
     }
@@ -196,11 +196,9 @@ export default function Barbearia() {
   async function criarBarbeiro(event) {
     event.preventDefault();
     if (!barbearia) return;
-
     setSavingBarbeiro(true);
     setError("");
     setSuccess("");
-
     try {
       const response = await barbeiroService.create({
         barbearia_id: barbearia.id,
@@ -208,15 +206,13 @@ export default function Barbearia() {
         telefone: novoBarbeiro.telefone,
         ativo: novoBarbeiro.ativo,
       });
-
       const item = response.barbeiro;
-      const novaLista = [...barbeiros, item];
-      setBarbeiros(novaLista);
+      setBarbeiros((current) => [...current, item]);
       setNovoBarbeiro({ nome: "", telefone: "", ativo: true });
       setBarbeiroSelecionadoId(String(item.id));
       setSuccess("Barbeiro criado com sucesso.");
     } catch (err) {
-      setError(err.response?.data?.message || "Erro ao criar barbeiro");
+      setError(err.response?.data?.message || "Erro ao criar barbeiro.");
     } finally {
       setSavingBarbeiro(false);
     }
@@ -225,61 +221,44 @@ export default function Barbearia() {
   async function alternarAtivo(barbeiro) {
     setError("");
     setSuccess("");
-
     try {
       const response = await barbeiroService.update(barbeiro.id, { ativo: !barbeiro.ativo });
       const atualizado = response.barbeiro;
       setBarbeiros((current) => current.map((item) => (item.id === barbeiro.id ? atualizado : item)));
       setSuccess("Status do barbeiro atualizado.");
     } catch (err) {
-      setError(err.response?.data?.message || "Erro ao atualizar barbeiro");
+      setError(err.response?.data?.message || "Erro ao atualizar barbeiro.");
     }
   }
 
   async function excluirBarbeiro(barbeiro) {
-    const confirmar = window.confirm(`Deseja realmente excluir o barbeiro ${barbeiro.nome}?`);
-    if (!confirmar) {
-      return;
-    }
-
+    if (!window.confirm(`Deseja realmente excluir o barbeiro ${barbeiro.nome}?`)) return;
     setError("");
     setSuccess("");
-
     try {
       await barbeiroService.remove(barbeiro.id);
-
       const listaAtualizada = barbeiros.filter((item) => item.id !== barbeiro.id);
       setBarbeiros(listaAtualizada);
-
       if (String(barbeiro.id) === barbeiroSelecionadoId) {
         setBarbeiroSelecionadoId(listaAtualizada.length > 0 ? String(listaAtualizada[0].id) : "");
       }
-
-      if (listaAtualizada.length === 0) {
-        setDisponibilidade(disponibilidadeInicial());
-      }
-
-      setSuccess("Barbeiro excluido com sucesso.");
+      if (listaAtualizada.length === 0) setDisponibilidade(disponibilidadeInicial());
+      setSuccess("Barbeiro excluído com sucesso.");
     } catch (err) {
-      setError(err.response?.data?.message || "Erro ao excluir barbeiro");
+      setError(err.response?.data?.message || "Erro ao excluir barbeiro.");
     }
   }
 
   async function salvarDisponibilidade() {
     if (!barbeiroSelecionadoId) return;
-
     setSavingDisponibilidade(true);
     setError("");
     setSuccess("");
-
     try {
       const payload = {
         disponibilidades: DIAS_SEMANA.flatMap((dia) => {
           const intervalos = disponibilidade[dia.value] || [];
-          if (intervalos.length === 0) {
-            return [{ dia_semana: dia.value, esta_disponivel: false }];
-          }
-
+          if (intervalos.length === 0) return [{ dia_semana: dia.value, esta_disponivel: false }];
           return intervalos.map((item) => ({
             dia_semana: dia.value,
             esta_disponivel: Boolean(item.esta_disponivel),
@@ -288,235 +267,359 @@ export default function Barbearia() {
           }));
         }),
       };
-
       await barbeiroService.setDisponibilidade(barbeiroSelecionadoId, payload);
       setSuccess("Disponibilidade do barbeiro salva com sucesso.");
     } catch (err) {
-      setError(err.response?.data?.message || "Erro ao salvar disponibilidade do barbeiro");
+      setError(err.response?.data?.message || "Erro ao salvar disponibilidade do barbeiro.");
     } finally {
       setSavingDisponibilidade(false);
     }
   }
 
+  async function salvarPrecoServico(servico, novoPreco) {
+    if (!novoPreco || Number(novoPreco) <= 0) {
+      setError("Informe um preço válido para o serviço.");
+      return;
+    }
+
+    setSavingPrecoServicoId(servico.id);
+    setError("");
+    setSuccess("");
+    try {
+      const response = await servicoService.update(servico.id, { preco: Number(novoPreco).toFixed(2) });
+      setServicos((current) => current.map((item) => (item.id === servico.id ? response.servico : item)));
+      setSuccess("Preço atualizado com sucesso.");
+    } catch (err) {
+      setError(err.response?.data?.message || "Erro ao atualizar preço do serviço.");
+    } finally {
+      setSavingPrecoServicoId(null);
+    }
+  }
+
   if (loading) {
-    return <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-8 text-white">Carregando barbearia...</div>;
+    return (
+      <div className="app-shell">
+        <Navbar onBack={() => navigate("/dashboard")} />
+        <main className="container page center">
+          <div className="spinner" style={{ margin: "48px auto 16px" }} />
+          <p className="muted">Carregando barbearia...</p>
+        </main>
+      </div>
+    );
   }
 
   if (user?.tipo_usuario !== "barbearia") {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-8 text-white">
-        <div className="mx-auto max-w-3xl rounded-2xl bg-white/10 p-8 text-center">
-          <h1 className="text-2xl font-bold">Tela exclusiva para dono de barbearia</h1>
-          <button onClick={() => navigate("/dashboard")} className="mt-6 rounded-lg bg-white px-4 py-2 text-slate-900">
-            Voltar
-          </button>
-        </div>
-      </div>
-    );
+    return <EstadoCentral titulo="Tela exclusiva para dono de barbearia" onVoltar={() => navigate("/dashboard")} />;
   }
 
   if (!barbearia) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-8 text-white">
-        <div className="mx-auto max-w-3xl rounded-2xl bg-white/10 p-8 text-center">
-          <h1 className="text-2xl font-bold">Nenhuma barbearia encontrada para este usuario</h1>
-          <p className="mt-3 text-slate-300">Cadastre uma barbearia antes de configurar funcionamento e disponibilidade.</p>
-          <button onClick={() => navigate("/dashboard")} className="mt-6 rounded-lg bg-white px-4 py-2 text-slate-900">
-            Voltar
-          </button>
-        </div>
-      </div>
+      <EstadoCentral
+        titulo="Nenhuma barbearia encontrada para este usuário"
+        descricao="Cadastre uma barbearia antes de configurar funcionamento e disponibilidade."
+        onVoltar={() => navigate("/dashboard")}
+      />
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-white">
-      <nav className="bg-white shadow-lg text-slate-900">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
-          <button onClick={() => navigate("/dashboard")} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-100">
-            Voltar
-          </button>
-          <h1 className="text-2xl font-bold">Painel da Barbearia</h1>
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate("/barbearia/agendamentos")} className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
-              Ir para agenda
-            </button>
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold">{barbearia.nome_comercial}</span>
+    <div className="app-shell">
+      <Navbar title="Minha barbearia" onBack={() => navigate("/dashboard")} />
+
+      <main className="container page fade-in">
+        <div className="between wrap" style={{ marginBottom: "24px" }}>
+          <div>
+            <h1 className="page-title">{barbearia.nome_comercial}</h1>
+            <p className="muted mt-2">Configure funcionamento, barbeiros e disponibilidade.</p>
           </div>
+          <button className="btn btn--ghost" onClick={() => navigate("/barbearia/agendamentos")}>
+            Ver agenda
+          </button>
         </div>
-      </nav>
 
-      <main className="mx-auto grid max-w-7xl gap-6 px-4 py-8 lg:grid-cols-[1fr_1fr]">
-        <section className="rounded-2xl bg-white p-6 text-slate-900 shadow-xl">
-          <h2 className="text-2xl font-bold">Funcionamento</h2>
-          <p className="mt-2 text-sm text-slate-500">Configure a janela principal de atendimento da barbearia por dia.</p>
+        {error ? <div className="alert alert--error" style={{ marginBottom: "16px" }}>{error}</div> : null}
+        {success ? <div className="alert alert--success" style={{ marginBottom: "16px" }}>{success}</div> : null}
 
-          <div className="mt-6 space-y-4">
-            {funcionamento.map((dia) => (
-              <div key={dia.dia_semana} className="rounded-xl border border-slate-200 p-4">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <p className="font-semibold">{DIAS_SEMANA.find((item) => item.value === dia.dia_semana)?.label}</p>
-                  </div>
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={dia.esta_aberto}
-                      onChange={(event) => atualizarFuncionamento(dia.dia_semana, "esta_aberto", event.target.checked)}
-                    />
-                    Aberto
-                  </label>
-                </div>
-
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  <input
-                    type="time"
-                    value={dia.hora_abertura}
-                    disabled={!dia.esta_aberto}
-                    onChange={(event) => atualizarFuncionamento(dia.dia_semana, "hora_abertura", event.target.value)}
-                    className="rounded-lg border border-slate-200 px-3 py-2 disabled:bg-slate-100"
-                  />
-                  <input
-                    type="time"
-                    value={dia.hora_fechamento}
-                    disabled={!dia.esta_aberto}
-                    onChange={(event) => atualizarFuncionamento(dia.dia_semana, "hora_fechamento", event.target.value)}
-                    className="rounded-lg border border-slate-200 px-3 py-2 disabled:bg-slate-100"
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <button
-            onClick={salvarFuncionamento}
-            disabled={savingFuncionamento}
-            className="mt-6 w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
-          >
-            {savingFuncionamento ? "Salvando funcionamento..." : "Salvar funcionamento"}
-          </button>
-        </section>
-
-        <section className="space-y-6">
-          <div className="rounded-2xl bg-white p-6 text-slate-900 shadow-xl">
-            <h2 className="text-2xl font-bold">Barbeiros</h2>
-            <form onSubmit={criarBarbeiro} className="mt-5 grid gap-3 md:grid-cols-[1.2fr_1fr_auto]">
-              <input
-                value={novoBarbeiro.nome}
-                onChange={(event) => setNovoBarbeiro((current) => ({ ...current, nome: event.target.value }))}
-                placeholder="Nome do barbeiro"
-                className="rounded-lg border border-slate-200 px-3 py-2"
-              />
-              <input
-                value={novoBarbeiro.telefone}
-                onChange={(event) => setNovoBarbeiro((current) => ({ ...current, telefone: event.target.value }))}
-                placeholder="Telefone"
-                className="rounded-lg border border-slate-200 px-3 py-2"
-              />
+        <div className="grid grid-2" style={{ alignItems: "start" }}>
+          <section className="stack stack-5">
+            <section className="card">
               <button
-                type="submit"
-                disabled={savingBarbeiro}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                type="button"
+                className="between"
+                onClick={() => setMostrarFuncionamento((current) => !current)}
+                aria-expanded={mostrarFuncionamento}
+                style={{
+                  width: "100%",
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  color: "inherit",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  gap: "16px",
+                }}
               >
-                {savingBarbeiro ? "Criando..." : "Adicionar"}
-              </button>
-            </form>
-
-            <div className="mt-5 space-y-3">
-              {barbeiros.map((barbeiro) => (
-                <div key={barbeiro.id} className="flex flex-col gap-3 rounded-xl border border-slate-200 p-4 md:flex-row md:items-center md:justify-between">
-                  <button
-                    onClick={() => setBarbeiroSelecionadoId(String(barbeiro.id))}
-                    className={`text-left ${String(barbeiro.id) === barbeiroSelecionadoId ? "font-bold text-blue-700" : "text-slate-900"}`}
-                  >
-                    <p>{barbeiro.nome}</p>
-                    <p className="text-sm text-slate-500">{barbeiro.telefone}</p>
-                  </button>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => alternarAtivo(barbeiro)}
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${barbeiro.ativo ? "bg-emerald-100 text-emerald-900" : "bg-rose-100 text-rose-900"}`}
-                    >
-                      {barbeiro.ativo ? "Ativo" : "Inativo"}
-                    </button>
-                    <button
-                      onClick={() => excluirBarbeiro(barbeiro)}
-                      className="rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100"
-                    >
-                      Excluir
-                    </button>
-                  </div>
+                <div>
+                  <h2 className="card-title">Funcionamento</h2>
+                  <p className="card-sub">Janela principal de atendimento por dia.</p>
                 </div>
-              ))}
-            </div>
-          </div>
+                <span className="badge badge--gold">{mostrarFuncionamento ? "Ocultar" : "Ver"}</span>
+              </button>
 
-          <div className="rounded-2xl bg-white p-6 text-slate-900 shadow-xl">
-            <h2 className="text-2xl font-bold">Disponibilidade do barbeiro</h2>
-            <p className="mt-2 text-sm text-slate-500">Selecione um barbeiro e defina os intervalos em que ele aceita agendamentos.</p>
-
-            <div className="mt-6 space-y-4">
-              {DIAS_SEMANA.map((dia) => (
-                <div key={dia.value} className="rounded-xl border border-slate-200 p-4">
-                  <div className="mb-3 flex items-center justify-between">
-                    <h3 className="font-semibold">{dia.label}</h3>
-                    <button onClick={() => adicionarIntervalo(dia.value)} className="text-sm font-semibold text-blue-700">
-                      + intervalo
-                    </button>
-                  </div>
-
-                  <div className="space-y-3">
-                    {(disponibilidade[dia.value] || []).map((intervalo, index) => (
-                      <div key={`${dia.value}-${index}`} className="grid gap-3 md:grid-cols-[auto_1fr_1fr_auto] md:items-center">
-                        <label className="flex items-center gap-2 text-sm">
+              {mostrarFuncionamento ? (
+                <>
+                  <div className="stack stack-4 mt-6">
+                    {funcionamento.map((dia) => (
+                      <div key={dia.dia_semana} className="card" style={{ padding: "16px", boxShadow: "none", background: "var(--wood-700)" }}>
+                        <div className="between">
+                          <p style={{ fontWeight: 600 }}>{DIAS_SEMANA.find((d) => d.value === dia.dia_semana)?.label}</p>
+                          <label className="row" style={{ gap: "8px", fontSize: "0.85rem" }}>
+                            <input
+                              type="checkbox"
+                              checked={dia.esta_aberto}
+                              onChange={(e) => atualizarFuncionamento(dia.dia_semana, "esta_aberto", e.target.checked)}
+                            />
+                            Aberto
+                          </label>
+                        </div>
+                        <div className="grid grid-2 mt-4">
                           <input
-                            type="checkbox"
-                            checked={intervalo.esta_disponivel}
-                            onChange={(event) => atualizarIntervalo(dia.value, index, "esta_disponivel", event.target.checked)}
+                            type="time"
+                            value={dia.hora_abertura}
+                            disabled={!dia.esta_aberto}
+                            onChange={(e) => atualizarFuncionamento(dia.dia_semana, "hora_abertura", e.target.value)}
                           />
-                          Disponivel
-                        </label>
-                        <input
-                          type="time"
-                          value={intervalo.hora_inicio}
-                          disabled={!intervalo.esta_disponivel}
-                          onChange={(event) => atualizarIntervalo(dia.value, index, "hora_inicio", event.target.value)}
-                          className="rounded-lg border border-slate-200 px-3 py-2 disabled:bg-slate-100"
-                        />
-                        <input
-                          type="time"
-                          value={intervalo.hora_fim}
-                          disabled={!intervalo.esta_disponivel}
-                          onChange={(event) => atualizarIntervalo(dia.value, index, "hora_fim", event.target.value)}
-                          className="rounded-lg border border-slate-200 px-3 py-2 disabled:bg-slate-100"
-                        />
-                        {(disponibilidade[dia.value] || []).length > 1 ? (
-                          <button onClick={() => removerIntervalo(dia.value, index)} className="text-sm font-semibold text-rose-700">
-                            remover
-                          </button>
-                        ) : (
-                          <span />
-                        )}
+                          <input
+                            type="time"
+                            value={dia.hora_fechamento}
+                            disabled={!dia.esta_aberto}
+                            onChange={(e) => atualizarFuncionamento(dia.dia_semana, "hora_fechamento", e.target.value)}
+                          />
+                        </div>
                       </div>
                     ))}
                   </div>
+
+                  <button className="btn btn--primary btn--block mt-6" onClick={salvarFuncionamento} disabled={savingFuncionamento}>
+                    {savingFuncionamento ? "Salvando..." : "Salvar funcionamento"}
+                  </button>
+                </>
+              ) : null}
+            </section>
+
+            <section className="card">
+              <button
+                type="button"
+                className="between"
+                onClick={() => setMostrarDisponibilidade((current) => !current)}
+                aria-expanded={mostrarDisponibilidade}
+                style={{
+                  width: "100%",
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  color: "inherit",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  gap: "16px",
+                }}
+              >
+                <div>
+                  <h2 className="card-title">Disponibilidade do barbeiro</h2>
+                  <p className="card-sub">
+                    {barbeiroSelecionadoId
+                      ? "Defina os intervalos em que o barbeiro selecionado aceita agendamentos."
+                      : "Selecione um barbeiro ao lado para configurar a disponibilidade."}
+                  </p>
                 </div>
-              ))}
+                <span className="badge badge--gold">{mostrarDisponibilidade ? "Ocultar" : "Ver"}</span>
+              </button>
+
+              {mostrarDisponibilidade ? (
+                <>
+                  <div className="stack stack-4 mt-6">
+                    {DIAS_SEMANA.map((dia) => (
+                      <div key={dia.value} className="card" style={{ padding: "16px", boxShadow: "none", background: "var(--wood-700)" }}>
+                        <div className="between">
+                          <h3 style={{ fontSize: "0.95rem" }}>{dia.label}</h3>
+                          <button onClick={() => adicionarIntervalo(dia.value)} className="btn btn--ghost btn--sm">
+                            + intervalo
+                          </button>
+                        </div>
+                        <div className="stack stack-4 mt-4">
+                          {(disponibilidade[dia.value] || []).map((intervalo, index) => (
+                            <div
+                              key={`${dia.value}-${index}`}
+                              className="grid"
+                              style={{ gridTemplateColumns: "auto 1fr 1fr auto", gap: "10px", alignItems: "center" }}
+                            >
+                              <label className="row" style={{ gap: "6px", fontSize: "0.8rem" }}>
+                                <input
+                                  type="checkbox"
+                                  checked={intervalo.esta_disponivel}
+                                  onChange={(e) => atualizarIntervalo(dia.value, index, "esta_disponivel", e.target.checked)}
+                                />
+                                Disp.
+                              </label>
+                              <input
+                                type="time"
+                                value={intervalo.hora_inicio}
+                                disabled={!intervalo.esta_disponivel}
+                                onChange={(e) => atualizarIntervalo(dia.value, index, "hora_inicio", e.target.value)}
+                              />
+                              <input
+                                type="time"
+                                value={intervalo.hora_fim}
+                                disabled={!intervalo.esta_disponivel}
+                                onChange={(e) => atualizarIntervalo(dia.value, index, "hora_fim", e.target.value)}
+                              />
+                              {(disponibilidade[dia.value] || []).length > 1 ? (
+                                <button onClick={() => removerIntervalo(dia.value, index)} className="btn btn--danger btn--sm">
+                                  ✕
+                                </button>
+                              ) : (
+                                <span />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    className="btn btn--primary btn--block mt-6"
+                    onClick={salvarDisponibilidade}
+                    disabled={!barbeiroSelecionadoId || savingDisponibilidade}
+                  >
+                    {savingDisponibilidade ? "Salvando..." : "Salvar disponibilidade"}
+                  </button>
+                </>
+              ) : null}
+            </section>
+          </section>
+
+          <section className="stack stack-5">
+            <div className="card">
+              <h2 className="card-title">Barbeiros</h2>
+              <p className="card-sub">Adicione, ative/desative ou remova barbeiros.</p>
+
+              <form onSubmit={criarBarbeiro} className="grid mt-6" style={{ gridTemplateColumns: "1.2fr 1fr auto", gap: "10px" }}>
+                <input
+                  value={novoBarbeiro.nome}
+                  onChange={(e) => setNovoBarbeiro((c) => ({ ...c, nome: e.target.value }))}
+                  placeholder="Nome do barbeiro"
+                />
+                <input
+                  value={novoBarbeiro.telefone}
+                  onChange={(e) => setNovoBarbeiro((c) => ({ ...c, telefone: e.target.value }))}
+                  placeholder="Telefone"
+                />
+                <button type="submit" className="btn btn--primary" disabled={savingBarbeiro}>
+                  {savingBarbeiro ? "..." : "Adicionar"}
+                </button>
+              </form>
+
+              <div className="stack stack-4 mt-6">
+                {barbeiros.length === 0 ? (
+                  <p className="muted" style={{ fontSize: "0.88rem" }}>Nenhum barbeiro cadastrado ainda.</p>
+                ) : (
+                  barbeiros.map((barbeiro) => (
+                    <div
+                      key={barbeiro.id}
+                      className="between wrap card"
+                      style={{
+                        padding: "14px 16px",
+                        boxShadow: "none",
+                        background: "var(--wood-700)",
+                        borderColor: String(barbeiro.id) === barbeiroSelecionadoId ? "var(--gold-deep)" : "var(--line)",
+                      }}
+                    >
+                      <button
+                        onClick={() => setBarbeiroSelecionadoId(String(barbeiro.id))}
+                        style={{ background: "none", border: "none", textAlign: "left", cursor: "pointer", color: "inherit" }}
+                      >
+                        <p style={{ fontWeight: 600, color: String(barbeiro.id) === barbeiroSelecionadoId ? "var(--gold)" : "var(--cream)" }}>
+                          {barbeiro.nome}
+                        </p>
+                        <p className="faint" style={{ fontSize: "0.8rem" }}>{barbeiro.telefone || "sem telefone"}</p>
+                      </button>
+                      <div className="row" style={{ gap: "8px" }}>
+                        <button
+                          onClick={() => alternarAtivo(barbeiro)}
+                          className={`badge ${barbeiro.ativo ? "badge--green" : "badge--red"}`}
+                          style={{ cursor: "pointer" }}
+                        >
+                          {barbeiro.ativo ? "Ativo" : "Inativo"}
+                        </button>
+                        <button onClick={() => excluirBarbeiro(barbeiro)} className="btn btn--danger btn--sm">
+                          Excluir
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
 
-            <button
-              onClick={salvarDisponibilidade}
-              disabled={!barbeiroSelecionadoId || savingDisponibilidade}
-              className="mt-6 w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
-            >
-              {savingDisponibilidade ? "Salvando disponibilidade..." : "Salvar disponibilidade do barbeiro"}
-            </button>
-          </div>
+            <div className="card">
+              <h2 className="card-title">Serviços e preços</h2>
+              <p className="card-sub">Ajuste o preço dos serviços.</p>
 
-          {error ? <div className="rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
-          {success ? <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{success}</div> : null}
-        </section>
+              <div className="stack stack-4 mt-6">
+                {servicos.length === 0 ? (
+                  <p className="muted" style={{ fontSize: "0.88rem" }}>Nenhum serviço vinculado a esta barbearia.</p>
+                ) : (
+                  servicos.map((servico) => (
+                    <ServicoItem
+                      key={servico.id}
+                      servico={servico}
+                      salvando={savingPrecoServicoId === servico.id}
+                      onSalvarPreco={(preco) => salvarPrecoServico(servico, preco)}
+                    />
+                  ))
+                )}
+              </div>
+            </div>
+          </section>
+        </div>
       </main>
+    </div>
+  );
+}
+
+function ServicoItem({ servico, onSalvarPreco, salvando }) {
+  const [preco, setPreco] = useState(String(servico.preco));
+  const alterado = Number(preco) !== Number(servico.preco);
+
+  useEffect(() => {
+    setPreco(String(servico.preco));
+  }, [servico.preco]);
+
+  return (
+    <div
+      className="card between wrap"
+      style={{ padding: "14px 16px", boxShadow: "none", background: "var(--wood-700)", gap: "12px" }}
+    >
+      <div>
+        <p style={{ fontWeight: 600 }}>{servico.nome_servico}</p>
+        <p className="faint" style={{ fontSize: "0.8rem" }}>{servico.duracao_min} min</p>
+      </div>
+      <div className="row" style={{ gap: "8px" }}>
+        <div className="field" style={{ width: "120px" }}>
+          <label style={{ fontSize: "0.66rem" }}>Preço (R$)</label>
+          <input type="number" min="0" step="0.01" value={preco} onChange={(e) => setPreco(e.target.value)} />
+        </div>
+        <button
+          type="button"
+          className="btn btn--ghost btn--sm"
+          disabled={!alterado || salvando}
+          onClick={() => onSalvarPreco(preco)}
+          style={{ alignSelf: "end" }}
+        >
+          {salvando ? "Salvando..." : "Salvar"}
+        </button>
+      </div>
     </div>
   );
 }

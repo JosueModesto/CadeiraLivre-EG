@@ -35,6 +35,9 @@ export class Usuario {
   @Column({ type: "varchar", length: 20, nullable: false })
   telefone!: string;
 
+  @Column({ type: "varchar", length: 255, nullable: true })
+  endereco?: string | null;
+
   @Column({ type: "enum", enum: TipoUsuario, nullable: false })
   tipo_usuario!: TipoUsuario;
 

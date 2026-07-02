@@ -39,15 +39,28 @@ export class BarbeariaController {
 
   async getAll(req: Request, res: Response): Promise<Response> {
     try {
-      const { cidade_id } = req.query;
+      const { cidade_id, usuario_id } = req.query;
       const barbeariaRepository = AppDataSource.getRepository(Barbearia);
 
-      let query = barbeariaRepository.createQueryBuilder("barbearia");
+      let query = barbeariaRepository
+        .createQueryBuilder("barbearia")
+        .leftJoinAndSelect("barbearia.cidade", "cidade")
+        .loadRelationCountAndMap("barbearia.total_servicos", "barbearia.servicos");
 
       if (cidade_id) {
         query = query.where("barbearia.cidade_id = :cidade_id", {
           cidade_id: Number(cidade_id),
         });
+      }
+
+      if (usuario_id) {
+        query = cidade_id
+          ? query.andWhere("barbearia.usuario_id = :usuario_id", {
+              usuario_id: Number(usuario_id),
+            })
+          : query.where("barbearia.usuario_id = :usuario_id", {
+              usuario_id: Number(usuario_id),
+            });
       }
 
       const barbearias = await query
@@ -59,6 +72,9 @@ export class BarbeariaController {
           "barbearia.endereco",
           "barbearia.cidade_id",
           "barbearia.descricao",
+          "cidade.id",
+          "cidade.nome",
+          "cidade.estado",
         ])
         .getMany();
 
@@ -80,6 +96,7 @@ export class BarbeariaController {
       const barbeariaRepository = AppDataSource.getRepository(Barbearia);
       const barbearia = await barbeariaRepository.findOne({
         where: { id: Number(id) },
+        relations: ["cidade"],
         select: [
           "id",
           "usuario_id",
@@ -88,6 +105,7 @@ export class BarbeariaController {
           "endereco",
           "cidade_id",
           "descricao",
+          "cidade",
         ],
       });
 
