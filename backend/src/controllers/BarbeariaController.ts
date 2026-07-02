@@ -5,6 +5,7 @@ import { Barbearia } from "../entities/Barbearia";
 const db = DatabaseSingleton.getInstance();
 
 export class BarbeariaController {
+  //Método para criar uma nova barbearia
   async create(req: Request, res: Response): Promise<Response> {
     const { usuario_id, nome_comercial, telefone_comercial, endereco, cidade_id, descricao } = req.body;
 
@@ -38,7 +39,7 @@ export class BarbeariaController {
       });
     }
   }
-
+  //Método para obter todas as barbearias, com filtros opcionais por cidade e usuário
   async getAll(req: Request, res: Response): Promise<Response> {
     try {
       const { cidade_id, usuario_id } = req.query;
@@ -91,6 +92,7 @@ export class BarbeariaController {
     }
   }
 
+  //Método para obter uma barbearia pelo ID
   async getById(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
@@ -127,7 +129,7 @@ export class BarbeariaController {
       });
     }
   }
-
+  //Método para atualizar os detalhes de uma barbearia
   async update(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
@@ -165,7 +167,7 @@ export class BarbeariaController {
       });
     }
   }
-
+  //Método para deletar uma barbearia
   async delete(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;

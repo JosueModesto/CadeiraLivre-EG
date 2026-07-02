@@ -22,7 +22,7 @@ export class BarbeiroController {
 		const [h, m] = hora.split(":").map(Number);
 		return h * 60 + m;
 	}
-
+	//Método para obter a disponibilidade de um barbeiro
 	async getDisponibilidade(req: Request, res: Response): Promise<Response> {
 		try {
 			const barbeiroId = Number(req.params.id);
@@ -41,7 +41,7 @@ export class BarbeiroController {
 			});
 		}
 	}
-
+	//Método para definir a disponibilidade de um barbeiro
 	async setDisponibilidade(req: AuthRequest, res: Response): Promise<Response> {
 		try {
 			const barbeiroId = Number(req.params.id);
@@ -165,7 +165,7 @@ export class BarbeiroController {
 			});
 		}
 	}
-
+	//Método para criar um novo barbeiro
 	async create(req: Request, res: Response): Promise<Response> {
 		const { barbearia_id, nome, telefone, ativo } = req.body;
 
@@ -197,7 +197,7 @@ export class BarbeiroController {
 			});
 		}
 	}
-
+	//Método para obter todos os barbeiros, com filtro opcional por barbearia
 	async getAll(req: Request, res: Response): Promise<Response> {
 		try {
 			const { barbearia_id } = req.query;
@@ -229,7 +229,7 @@ export class BarbeiroController {
 			});
 		}
 	}
-
+	//Método para obter um barbeiro pelo ID
 	async getById(req: Request, res: Response): Promise<Response> {
 		try {
 			const { id } = req.params;
@@ -254,7 +254,7 @@ export class BarbeiroController {
 			});
 		}
 	}
-
+	//Método para atualizar os detalhes de um barbeiro
 	async update(req: Request, res: Response): Promise<Response> {
 		try {
 			const { id } = req.params;
@@ -289,7 +289,7 @@ export class BarbeiroController {
 			});
 		}
 	}
-
+	//Método para deletar um barbeiro
 	async delete(req: Request, res: Response): Promise<Response> {
 		try {
 			const { id } = req.params;

@@ -26,7 +26,7 @@ export class AgendamentoBarbeariaController {
   private async obterBarbeariaDoUsuario(barbeariaId: number, usuarioId: number) {
     return this.barbeariaRepo.findOne({ where: { id: barbeariaId, usuario_id: usuarioId } });
   }
-
+  //Método para validar o formato do horário
   private validarHorario(horario?: string): boolean {
     if (!horario) return false;
     return /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(horario);
@@ -47,7 +47,7 @@ export class AgendamentoBarbeariaController {
 
     return [];
   }
-
+  //Método para obter o funcionamento da barbearia
   async getFuncionamento(req: AuthRequest, res: Response): Promise<Response> {
     try {
       const barbeariaId = Number(req.params.id);
@@ -79,7 +79,7 @@ export class AgendamentoBarbeariaController {
       });
     }
   }
-
+  //Método para atualizar o funcionamento da barbearia
   async setFuncionamento(req: AuthRequest, res: Response): Promise<Response> {
     try {
       const barbeariaId = Number(req.params.id);
@@ -157,7 +157,7 @@ export class AgendamentoBarbeariaController {
       });
     }
   }
-
+  //Método para atualizar o intervalo de agendamento da barbearia
   async setIntervalo(req: AuthRequest, res: Response): Promise<Response> {
     try {
       const barbeariaId = Number(req.params.id);
@@ -198,6 +198,7 @@ export class AgendamentoBarbeariaController {
     }
   }
 
+  //Método para obter os agendamentos do dia de um barbeiro específico
   async getAgendamentosDoDia(req: AuthRequest, res: Response): Promise<Response> {
     try {
       const barbeariaId = Number(req.params.id);
@@ -239,7 +240,7 @@ export class AgendamentoBarbeariaController {
       });
     }
   }
-
+  //Método para obter os próximos agendamentos da barbearia
   async getProximosAgendamentos(req: AuthRequest, res: Response): Promise<Response> {
     try {
       const barbeariaId = Number(req.params.id);
@@ -275,7 +276,7 @@ export class AgendamentoBarbeariaController {
       });
     }
   }
-
+  //Método para cancelar um agendamento da barbearia
   async cancelAgendamento(req: AuthRequest, res: Response): Promise<Response> {
     try {
       const barbeariaId = Number(req.params.id);
@@ -312,12 +313,12 @@ export class AgendamentoBarbeariaController {
       });
     }
   }
-
+  //Método para normalizar a hora para o formato do banco de dados
   private normalizarHoraParaBanco(hora: string): string {
     const [h, m] = hora.split(":");
     return `${h.padStart(2, "0")}:${m.padStart(2, "0")}:00`;
   }
-
+  //Método para converter a hora em minutos
   private converterHoraEmMinutos(hora: string): number {
     const [h, m] = hora.split(":").map(Number);
     return h * 60 + m;

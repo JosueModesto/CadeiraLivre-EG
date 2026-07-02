@@ -9,6 +9,7 @@ const db = DatabaseSingleton.getInstance();
 const JWT_SECRET = process.env.JWT_SECRET || "chave_secreta_barbearia_123";
 
 export class AuthController {
+  //Método para registrar um novo usuário
   async register(req: Request, res: Response): Promise<Response> {
     try {
       const { nome, email, senha, telefone, endereco, tipo_usuario, cidade_id } = req.body;
@@ -76,6 +77,7 @@ export class AuthController {
     }
   }
 
+  //Método para autenticar um usuário
   async login(req: Request, res: Response): Promise<Response> {
     try {
       const { email } = req.body;

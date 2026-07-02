@@ -4,15 +4,15 @@ services:
     container_name: cadeira_livre_db
     restart: always
     environment:
-      POSTGRES_USER: cadeira_livre_user
-      POSTGRES_PASSWORD: cadeira_livre_password
-      POSTGRES_DB: cadeira_livre_db
+      POSTGRES_USER: ${POSTGRES_USER:-cadeira_livre_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cadeira_livre_password}
+      POSTGRES_DB: ${POSTGRES_DB:-cadeira_livre_db}
     ports:
-      - "5433:5432"
+      - "${DB_EXTERNAL_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cadeira_livre_user -d cadeira_livre_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cadeira_livre_user} -d ${POSTGRES_DB:-cadeira_livre_db}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -23,31 +23,39 @@ services:
     container_name: cadeira_livre_backend
     restart: always
     ports:
-      - "3001:3000"
+      - "${BACKEND_EXTERNAL_PORT:-3001}:${PORT:-3000}"
     depends_on:
       db:
         condition: service_healthy
     environment:
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_USER: cadeira_livre_user
-      DB_PASS: cadeira_livre_password
-      DB_NAME: cadeira_livre_db
-      DB_SYNCHRONIZE: "true"
-      DB_LOGGING: "false"
-      DB_RUN_SEED: "true"
-      PORT: 3000
-      PUBLIC_PORT: 3001
-      JWT_SECRET: supersecret
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER:-cadeira_livre_user}
+      DB_PASS: ${DB_PASS:-cadeira_livre_password}
+      DB_NAME: ${DB_NAME:-cadeira_livre_db}
+      DB_SYNCHRONIZE: ${DB_SYNCHRONIZE:-true}
+      DB_LOGGING: ${DB_LOGGING:-false}
+      DB_RUN_SEED: ${DB_RUN_SEED:-true}
+      PORT: ${PORT:-3000}
+      PUBLIC_PORT: ${PUBLIC_PORT:-3001}
+      JWT_SECRET: ${JWT_SECRET:-supersecret}
+
+  backend-test:
+    build:
+      context: ./backend
+    profiles: ["test"]
+    container_name: cadeira_livre_backend_test
+    working_dir: /app
+    command: npm test
 
   frontend:
     build:
       context: ./frontend
     container_name: cadeira_livre_frontend
     ports:
-      - "5173:5173"
+      - "${FRONTEND_EXTERNAL_PORT:-5173}:5173"
     environment:
-      VITE_API_URL: http://localhost:3001
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
     depends_on:
       - backend
 
