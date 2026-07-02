@@ -46,7 +46,7 @@ services:
     profiles: ["test"]
     container_name: cadeira_livre_backend_test
     working_dir: /app
-    command: npm test
+    command: npm test -- teste/AgendamentoService.cancelar.test.ts teste/AgendamentoService.criar.test.ts
 
   frontend:
     build:

@@ -143,12 +143,6 @@ Observações:
 docker compose --profile test run --rm backend-test
 ```
 
-### Teste do backend sem Docker 
-```bash
-cd backend
-npm test
-```
-
 ### Comandos úteis de validação
 
 Validar configuração do Compose:
