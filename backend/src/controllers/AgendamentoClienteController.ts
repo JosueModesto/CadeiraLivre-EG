@@ -7,7 +7,7 @@ const db = DatabaseSingleton.getInstance();
 
 export class AgendamentoClienteController {
   constructor(private readonly agendamentoService: AgendamentoService = new AgendamentoService()) {}
-
+  //Método para criar um agendamento
   async create(req: Request, res: Response): Promise<Response> {
     try {
       const { barbearia_id, barbeiro_id, servico_ids, data_hora_inicio } = req.body;
@@ -42,7 +42,7 @@ export class AgendamentoClienteController {
       });
     }
   }
-
+  //Método para obter os agendamentos do cliente
   async getMyAppointments(req: Request, res: Response): Promise<Response> {
     try {
       const cliente_id = (req as any).user?.id;
@@ -65,7 +65,7 @@ export class AgendamentoClienteController {
       });
     }
   }
-
+  //Método para obter os detalhes de um agendamento específico do cliente
   async cancel(req: Request, res: Response): Promise<Response> {
     try {
       const cliente_id = (req as any).user?.id;
@@ -96,7 +96,7 @@ export class AgendamentoClienteController {
       });
     }
   }
-
+  //Método para obter os detalhes de um agendamento específico do cliente
   async getAvailableSlots(req: Request, res: Response): Promise<Response> {
     try {
       const { barbearia_id, barbeiro_id, data } = req.query;
@@ -128,7 +128,7 @@ export class AgendamentoClienteController {
       });
     }
   }
-
+  //Método para verificar a disponibilidade de um horário específico
   async checkAvailability(req: Request, res: Response): Promise<Response> {
     try {
       const { barbearia_id, barbeiro_id, data_hora_inicio } = req.query;

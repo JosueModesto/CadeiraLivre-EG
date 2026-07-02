@@ -6,6 +6,7 @@ import { TipoUsuario, Usuario } from "../entities/Usuario";
 const db = DatabaseSingleton.getInstance();
 
 export class UsuarioController {
+  //Método para criar um novo usuário
   async create(req: Request, res: Response): Promise<Response> {
     try {
       const { nome, email, senha, telefone, endereco, tipo_usuario, cidade_id } = req.body;
@@ -67,7 +68,7 @@ export class UsuarioController {
       });
     }
   }
-
+  //Método para obter todos os usuários
   async getAll(req: Request, res: Response): Promise<Response> {
     try {
       const usuarioRepository = db.getRepository(Usuario);
@@ -85,7 +86,7 @@ export class UsuarioController {
       });
     }
   }
-
+  //Método para obter um usuário pelo ID
   async getById(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
@@ -110,7 +111,7 @@ export class UsuarioController {
       });
     }
   }
-
+  //Método para atualizar os detalhes de um usuário
   async update(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;

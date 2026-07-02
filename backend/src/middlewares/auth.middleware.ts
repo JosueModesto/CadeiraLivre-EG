@@ -11,7 +11,7 @@ export interface AuthRequest extends Request {
     tipo_usuario: TipoUsuario;
   };
 }
-
+// Middleware para autenticação de token JWT
 export function authenticateToken(
   req: AuthRequest,
   res: Response,
@@ -41,7 +41,7 @@ export function authenticateToken(
     });
   }
 }
-
+// Middleware para verificar se o usuário é administrador
 export function requireAdmin(
   req: AuthRequest,
   res: Response,
