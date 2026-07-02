@@ -5,7 +5,7 @@ import { servicoService } from "../services/servicoService";
 import Navbar from "../components/Navbar";
 
 function formatarDataHora(valor) {
-  return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(valor));
+  return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "UTC" }).format(new Date(valor));
 }
 
 function formatarMoeda(valor) {

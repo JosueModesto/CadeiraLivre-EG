@@ -6,6 +6,7 @@ const db = DatabaseSingleton.getInstance();
 
 
 export class CidadeController{
+    //Método para criar uma nova cidade
     async create(req: Request, res: Response): Promise<Response> {
         const { nome, estado} = req.body;
         
@@ -35,7 +36,7 @@ export class CidadeController{
 
         }
     }
-
+    //Método para obter todas as cidades
     async getAll(req: Request, res: Response): Promise<Response> {
         try {
         const cidadeRepository = db.getRepository(Cidade);
@@ -54,44 +55,44 @@ export class CidadeController{
         }
     }
 
+    //Método para obter uma cidade pelo ID
+    async getById(req: Request, res: Response): Promise<Response> {
+        try {
+        const { id } = req.params;
 
-async getById(req: Request, res: Response): Promise<Response> {
-    try {
-      const { id } = req.params;
-
-      const cidadeRepository = db.getRepository(Cidade);
-      const cidade = await cidadeRepository.findOne({
-        where: { id: Number(id) },
-        select: {
-        id: true,
-        nome: true,
-        estado: true,
-        usuarios: {
-            id: true,
-            nome: true, 
-        },
-        /*barbearias: {
+        const cidadeRepository = db.getRepository(Cidade);
+        const cidade = await cidadeRepository.findOne({
+            where: { id: Number(id) },
+            select: {
             id: true,
             nome: true,
-        }*/
-        }
-      });
-
-      if (!cidade) {
-        return res.status(404).json({
-          message: "Cidade não encontrada",
+            estado: true,
+            usuarios: {
+                id: true,
+                nome: true, 
+            },
+            /*barbearias: {
+                id: true,
+                nome: true,
+            }*/
+            }
         });
-      }
 
-      return res.status(200).json(cidade);
-    } catch (error: any) {
-      return res.status(500).json({
-        message: "Erro interno no servidor",
-        error: error.message,
-      });
+        if (!cidade) {
+            return res.status(404).json({
+            message: "Cidade não encontrada",
+            });
+        }
+
+        return res.status(200).json(cidade);
+        } catch (error: any) {
+        return res.status(500).json({
+            message: "Erro interno no servidor",
+            error: error.message,
+        });
+        }
     }
-  }
-
+    //Método para atualizar os detalhes de uma cidade
     async update(req: Request, res: Response): Promise<Response> {
         try {
             const { id } = req.params;
@@ -125,6 +126,7 @@ async getById(req: Request, res: Response): Promise<Response> {
         }
     }
 
+    //Método para deletar uma cidade
     async delete(req: Request, res: Response): Promise<Response> {
         try {
             const { id } = req.params;

@@ -9,6 +9,7 @@ import { AuthRequest } from "../middlewares/auth.middleware";
 const db = DatabaseSingleton.getInstance();
 
 export class ServicoController {
+	//Método para criar um novo serviço
 	async create(req: AuthRequest, res: Response): Promise<Response> {
 		if (!req.user) {
 			return res.status(401).json({
@@ -120,7 +121,7 @@ export class ServicoController {
 			});
 		}
 	}
-
+	//Método para obter todos os serviços, com filtro opcional por barbearia
 	async getAll(req: Request, res: Response): Promise<Response> {
 		try {
 			const { barbearia_id, global } = req.query;
@@ -158,7 +159,7 @@ export class ServicoController {
 			});
 		}
 	}
-
+	//Método para obter um serviço pelo ID
 	async getById(req: Request, res: Response): Promise<Response> {
 		try {
 			const { id } = req.params;
@@ -183,7 +184,7 @@ export class ServicoController {
 			});
 		}
 	}
-
+	//Método para atualizar os detalhes de um serviço
 	async update(req: AuthRequest, res: Response): Promise<Response> {
 		try {
 			const { id } = req.params;
@@ -256,7 +257,7 @@ export class ServicoController {
 			});
 		}
 	}
-
+	//Método para deletar um serviço
 	async delete(req: AuthRequest, res: Response): Promise<Response> {
 		try {
 			const { id } = req.params;

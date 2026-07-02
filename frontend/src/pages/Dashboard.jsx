@@ -7,6 +7,12 @@ import { usuarioService } from "../services/usuarioService";
 import { barbeariaService } from "../services/barbeariaService";
 import { cidadeService } from "../services/cidadeService";
 
+const REGEX_SOMENTE_DIGITOS = /^\d+$/;
+
+function validarTelefoneSomenteNumeros(valor) {
+  return REGEX_SOMENTE_DIGITOS.test(String(valor || "").trim());
+}
+
 function Tile({ title, description, onClick }) {
   return (
     <button className="card" onClick={onClick} style={{ textAlign: "left", cursor: "pointer" }}>
@@ -112,13 +118,23 @@ function UserDashboard() {
   async function salvarConta() {
     if (!perfilUsuario?.id) return;
 
+    if (!validarTelefoneSomenteNumeros(formConta.telefone)) {
+      setErroConta("Telefone pessoal deve conter apenas números.");
+      return;
+    }
+
+    if (isBarbearia && formConta.telefone_comercial && !validarTelefoneSomenteNumeros(formConta.telefone_comercial)) {
+      setErroConta("Telefone comercial deve conter apenas números.");
+      return;
+    }
+
     setSalvandoConta(true);
     setErroConta("");
     setMensagemConta("");
 
     try {
       const usuarioResponse = await usuarioService.update(perfilUsuario.id, {
-        telefone: formConta.telefone,
+        telefone: formConta.telefone.trim(),
         cidade_id: isBarbearia ? Number(formConta.cidade_id) : undefined,
         endereco: isBarbearia ? undefined : formConta.endereco,
       });
@@ -127,7 +143,7 @@ function UserDashboard() {
       if (isBarbearia && perfilBarbearia?.id) {
         const barbeariaResponse = await barbeariaService.update(perfilBarbearia.id, {
           nome_comercial: formConta.nome_comercial,
-          telefone_comercial: formConta.telefone_comercial || null,
+          telefone_comercial: formConta.telefone_comercial ? formConta.telefone_comercial.trim() : null,
           endereco: formConta.endereco_barbearia,
           cidade_id: Number(formConta.cidade_id),
         });
@@ -242,7 +258,14 @@ function UserDashboard() {
                     </div>
                     <div className="field">
                       <label>Telefone pessoal</label>
-                      <input value={formConta.telefone} onChange={(event) => atualizarCampoConta("telefone", event.target.value)} />
+                      <input
+                        type="tel"
+                        value={formConta.telefone}
+                        onChange={(event) => atualizarCampoConta("telefone", event.target.value)}
+                        placeholder="Ex.: 44999990000"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                      />
                     </div>
                     {!isBarbearia ? (
                       <div className="field">
@@ -269,7 +292,14 @@ function UserDashboard() {
                         </div>
                         <div className="field">
                           <label>Telefone comercial</label>
-                          <input value={formConta.telefone_comercial} onChange={(event) => atualizarCampoConta("telefone_comercial", event.target.value)} />
+                          <input
+                            type="tel"
+                            value={formConta.telefone_comercial}
+                            onChange={(event) => atualizarCampoConta("telefone_comercial", event.target.value)}
+                            placeholder="Ex.: 4430200000"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                          />
                         </div>
                         <div className="field" style={{ gridColumn: "1 / -1" }}>
                           <label>Endereço</label>

@@ -14,8 +14,8 @@ export const swaggerDocs = {
   paths: {
     "/api/auth/register": {
       post: {
-        summary: "Registra um novo usurio",
-        tags: ["Autenticao"],
+        summary: "Registra um novo usuário",
+        tags: ["Autenticação"],
         requestBody: {
           required: true,
           content: {
@@ -24,11 +24,11 @@ export const swaggerDocs = {
                 type: "object",
                 required: ["nome", "email", "senha", "telefone", "tipo_usuario"],
                 properties: {
-                  nome: { type: "string", description: "Nome do usurio" },
-                  email: { type: "string", description: "Email do usurio" },
-                  senha: { type: "string", description: "Senha (mnimo 6 caracteres)" },
-                  telefone: { type: "string", description: "Telefone do usurio" },
-                  tipo_usuario: { type: "string", enum: ["cliente", "barbearia", "administrador"], description: "Tipo de usurio" },
+                  nome: { type: "string", description: "Nome do usuário" },
+                  email: { type: "string", description: "Email do usuário" },
+                  senha: { type: "string", description: "Senha (mínimo 6 caracteres)" },
+                  telefone: { type: "string", description: "Telefone do usuário" },
+                  tipo_usuario: { type: "string", enum: ["cliente", "barbearia", "administrador"], description: "Tipo de usuário" },
                   cidade_id: { type: "number", description: "ID da cidade (opcional)" },
                 },
               },
@@ -37,7 +37,7 @@ export const swaggerDocs = {
         },
         responses: {
           "201": {
-            description: "Usurio registrado com sucesso",
+            description: "Usuário registrado com sucesso",
             content: {
               "application/json": {
                 schema: {
@@ -54,15 +54,15 @@ export const swaggerDocs = {
               },
             },
           },
-          "400": { description: "Email j cadastrado ou campos obrigatrios faltando" },
+          "400": { description: "Email já cadastrado ou campos obrigatórios faltando" },
           "500": { description: "Erro interno do servidor" },
         },
       },
     },
     "/api/auth/login": {
       post: {
-        summary: "Autentica um usurio e retorna um token JWT",
-        tags: ["Autenticao"],
+        summary: "Autentica um usuário e retorna um token JWT",
+        tags: ["Autenticação"],
         requestBody: {
           required: true,
           content: {
@@ -71,8 +71,8 @@ export const swaggerDocs = {
                 type: "object",
                 required: ["email", "senha"],
                 properties: {
-                  email: { type: "string", description: "Email do usurio" },
-                  senha: { type: "string", description: "Senha do usurio" },
+                  email: { type: "string", description: "Email do usuário" },
+                  senha: { type: "string", description: "Senha do usuário" },
                 },
               },
             },
@@ -80,7 +80,7 @@ export const swaggerDocs = {
         },
         responses: {
           "200": {
-            description: "Autenticao bem-sucedida",
+            description: "Autenticação bem-sucedida",
             content: {
               "application/json": {
                 schema: {
@@ -101,15 +101,15 @@ export const swaggerDocs = {
               },
             },
           },
-          "401": { description: "Credenciais invlidas" },
+          "401": { description: "Credenciais inválidas" },
           "500": { description: "Erro interno do servidor" },
         },
       },
     },
     "/api/usuarios": {
       post: {
-        summary: "Cria um novo usurio no sistema",
-        tags: ["Usurios"],
+        summary: "Cria um novo usuário no sistema",
+        tags: ["Usuários"],
         requestBody: {
           required: true,
           content: {
@@ -118,11 +118,11 @@ export const swaggerDocs = {
                 type: "object",
                 required: ["nome", "email", "senha", "telefone", "tipo_usuario"],
                 properties: {
-                  nome: { type: "string", description: "Nome completo do usurio" },
-                  email: { type: "string", description: "Email nico do usurio" },
-                  senha: { type: "string", description: "Senha (mnimo 6 caracteres)" },
-                  telefone: { type: "string", description: "Telefone do usurio" },
-                  tipo_usuario: { type: "string", enum: ["cliente", "barbearia", "administrador"], description: "Tipo de usurio" },
+                  nome: { type: "string", description: "Nome completo do usuário" },
+                  email: { type: "string", description: "Email único do usuário" },
+                  senha: { type: "string", description: "Senha (mínimo 6 caracteres)" },
+                  telefone: { type: "string", description: "Telefone do usuário" },
+                  tipo_usuario: { type: "string", enum: ["cliente", "barbearia", "administrador"], description: "Tipo de usuário" },
                   cidade_id: { type: "number", description: "ID da cidade (opcional)" },
                 },
               },
@@ -131,7 +131,7 @@ export const swaggerDocs = {
         },
         responses: {
           "201": {
-            description: "Usurio criado com sucesso",
+            description: "Usuário criado com sucesso",
             content: {
               "application/json": {
                 schema: {
@@ -155,16 +155,16 @@ export const swaggerDocs = {
               },
             },
           },
-          "400": { description: "Email j cadastrado ou campos obrigatrios faltando" },
+          "400": { description: "Email já cadastrado ou campos obrigatórios faltando" },
           "500": { description: "Erro interno do servidor" },
         },
       },
       get: {
-        summary: "Lista todos os usurios",
-        tags: ["Usurios"],
+        summary: "Lista todos os usuários",
+        tags: ["Usuários"],
         responses: {
           "200": {
-            description: "Lista de usurios",
+            description: "Lista de usuários",
             content: {
               "application/json": {
                 schema: {
@@ -196,20 +196,20 @@ export const swaggerDocs = {
     },
     "/api/usuarios/{id}": {
       get: {
-        summary: "Obtm um usurio especfico",
-        tags: ["Usurios"],
+        summary: "Obtém um usuário específico pelo ID",
+        tags: ["Usuários"],
         parameters: [
           {
             name: "id",
             in: "path",
             required: true,
             schema: { type: "number" },
-            description: "ID do usurio",
+            description: "ID do usuário",
           },
         ],
         responses: {
           "200": {
-            description: "Usurio encontrado",
+            description: "Usuário encontrado",
             content: {
               "application/json": {
                 schema: {
@@ -227,20 +227,20 @@ export const swaggerDocs = {
               },
             },
           },
-          "404": { description: "Usurio no encontrado" },
+          "404": { description: "Usuário não encontrado" },
           "500": { description: "Erro interno do servidor" },
         },
       },
       put: {
-        summary: "Atualiza um usurio existente",
-        tags: ["Usurios"],
+        summary: "Atualiza um usuário existente",
+        tags: ["Usuários"],
         parameters: [
           {
             name: "id",
             in: "path",
             required: true,
             schema: { type: "number" },
-            description: "ID do usurio",
+            description: "ID do usuário",
           },
         ],
         requestBody: {
@@ -249,11 +249,11 @@ export const swaggerDocs = {
               schema: {
                 type: "object",
                 properties: {
-                  nome: { type: "string", description: "Nome do usurio" },
-                  telefone: { type: "string", description: "Telefone do usurio" },
-                  tipo_usuario: { type: "string", description: "Tipo de usurio" },
+                  nome: { type: "string", description: "Nome do usuário" },
+                  telefone: { type: "string", description: "Telefone do usuário" },
+                  tipo_usuario: { type: "string", description: "Tipo de usuário" },
                   cidade_id: { type: "number", description: "ID da cidade" },
-                  senha: { type: "string", description: "Nova senha (mnimo 6 caracteres)" },
+                  senha: { type: "string", description: "Nova senha (mínimo 6 caracteres)" },
                 },
               },
             },
@@ -261,7 +261,7 @@ export const swaggerDocs = {
         },
         responses: {
           "200": {
-            description: "Usurio atualizado com sucesso",
+            description: "Usuário atualizado com sucesso",
             content: {
               "application/json": {
                 schema: {
@@ -285,8 +285,8 @@ export const swaggerDocs = {
               },
             },
           },
-          "404": { description: "Usurio no encontrado" },
-          "400": { description: "Campos invlidos" },
+          "404": { description: "Usuário não encontrado" },
+          "400": { description: "Campos inválidos" },
           "500": { description: "Erro interno do servidor" },
         },
       },
@@ -326,13 +326,13 @@ export const swaggerDocs = {
             },
           },
           "400": {
-            description: "Campos obrigatrios faltando",
+            description: "Campos obrigatórios faltando",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Campos obrigatrios faltando" },
+                    message: { type: "string", example: "Campos obrigatórios faltando" },
                   },
                 },
               },
@@ -345,7 +345,7 @@ export const swaggerDocs = {
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Erro interno no Servidor" },
+                    message: { type: "string", example: "Erro interno no servidor" },
                     error: { type: "string" },
                   },
                 },
@@ -400,7 +400,7 @@ export const swaggerDocs = {
     },
     "/api/cidades/{id}": {
       get: {
-        summary: "Obtm uma cidade especfica com seus usurios e barbearias filtrados",
+        summary: "Obtém uma cidade específica com seus usuários e barbearias filtrados",
         tags: ["Cidades"],
         parameters: [
           {
@@ -448,13 +448,13 @@ export const swaggerDocs = {
             },
           },
           "404": {
-            description: "Cidade no encontrada",
+            description: "Cidade não encontrada",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Cidade no encontrada" },
+                    message: { type: "string", example: "Cidade não encontrada" },
                   },
                 },
               },
@@ -525,13 +525,13 @@ export const swaggerDocs = {
             },
           },
           "404": {
-            description: "Cidade no encontrada",
+            description: "Cidade não encontrada",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Cidade no encontrada" },
+                    message: { type: "string", example: "Cidade não encontrada" },
                   },
                 },
               },
@@ -567,26 +567,26 @@ export const swaggerDocs = {
         ],
         responses: {
           "200": {
-            description: "Cidade excluda com sucesso",
+            description: "Cidade excluída com sucesso",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Cidade excluda com sucesso!" },
+                    message: { type: "string", example: "Cidade excluída com sucesso!" },
                   },
                 },
               },
             },
           },
           "404": {
-            description: "Cidade no encontrada",
+            description: "Cidade não encontrada",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Cidade no encontrada" },
+                    message: { type: "string", example: "Cidade não encontrada" },
                   },
                 },
               },
@@ -635,7 +635,7 @@ export const swaggerDocs = {
           "201": {
             description: "Barbeiro criado com sucesso",
           },
-          "400": { description: "Campos obrigatrios faltando" },
+          "400": { description: "Campos obrigatórios faltando" },
           "500": { description: "Erro interno no servidor" },
         },
       },
@@ -652,7 +652,7 @@ export const swaggerDocs = {
     },
     "/api/barbeiros/{id}": {
       get: {
-        summary: "Obtm um barbeiro especfico",
+        summary: "Obtém um barbeiro específico pelo ID",
         tags: ["Barbeiros"],
         parameters: [
           {
@@ -665,7 +665,7 @@ export const swaggerDocs = {
         ],
         responses: {
           "200": { description: "Barbeiro encontrado" },
-          "404": { description: "Barbeiro no encontrado" },
+          "404": { description: "Barbeiro não encontrado" },
           "500": { description: "Erro interno no servidor" },
         },
       },
@@ -698,7 +698,7 @@ export const swaggerDocs = {
         },
         responses: {
           "200": { description: "Barbeiro atualizado com sucesso" },
-          "404": { description: "Barbeiro no encontrado" },
+          "404": { description: "Barbeiro não encontrado" },
           "500": { description: "Erro interno no servidor" },
         },
       },
@@ -715,8 +715,8 @@ export const swaggerDocs = {
           },
         ],
         responses: {
-          "200": { description: "Barbeiro excludo com sucesso" },
-          "404": { description: "Barbeiro no encontrado" },
+          "200": { description: "Barbeiro excluído com sucesso" },
+          "404": { description: "Barbeiro não encontrado" },
           "500": { description: "Erro interno no servidor" },
         },
       },
@@ -736,7 +736,7 @@ export const swaggerDocs = {
         ],
         responses: {
           "200": { description: "Disponibilidades do barbeiro" },
-          "404": { description: "Barbeiro no encontrado" },
+          "404": { description: "Barbeiro não encontrado" },
         },
       },
       put: {
@@ -779,78 +779,78 @@ export const swaggerDocs = {
         },
         responses: {
           "200": { description: "Disponibilidade atualizada" },
-          "400": { description: "Payload invlido" },
-          "401": { description: "No autenticado" },
-          "403": { description: "Sem permisso" },
-          "404": { description: "Barbeiro no encontrado" },
+          "400": { description: "Payload inválido" },
+          "401": { description: "Não autenticado" },
+          "403": { description: "Sem permissão" },
+          "404": { description: "Barbeiro não encontrado" },
         },
       },
     },
     "/api/servicos": {
       post: {
-        summary: "Cria um novo servio",
-        tags: ["Servios"],
+        summary: "Cria um novo serviço",
+        tags: ["Serviços"],
         requestBody: {
           required: true,
           content: {
             "application/json": {
               schema: {
                 type: "object",
-                required: ["barbearia_id", "nome_servico", "preco", "duracao_min"],
+                required: ["barbearia_id", "nome_servico", "preço", "duracao_min"],
                 properties: {
                   barbearia_id: { type: "number", description: "ID da barbearia" },
-                  nome_servico: { type: "string", description: "Nome do servio" },
-                  preco: { type: "string", description: "Preo do servio (decimal)" },
-                  duracao_min: { type: "number", description: "Durao em minutos" },
+                  nome_servico: { type: "string", description: "Nome do serviço" },
+                  preço: { type: "string", description: "Preço do serviço (decimal)" },
+                  duracao_min: { type: "number", description: "Duração em minutos" },
                 },
               },
             },
           },
         },
         responses: {
-          "201": { description: "Servio criado com sucesso" },
-          "400": { description: "Campos obrigatrios faltando" },
+          "201": { description: "Serviço criado com sucesso" },
+          "400": { description: "Campos obrigatórios faltando" },
           "500": { description: "Erro interno no servidor" },
         },
       },
       get: {
-        summary: "Lista todos os servios",
-        tags: ["Servios"],
+        summary: "Lista todos os serviços",
+        tags: ["Serviços"],
         responses: {
-          "200": { description: "Lista de servios" },
+          "200": { description: "Lista de serviços" },
           "500": { description: "Erro interno no servidor" },
         },
       },
     },
     "/api/servicos/{id}": {
       get: {
-        summary: "Obtm um servio especfico",
-        tags: ["Servios"],
+        summary: "Obtém um serviço específico",
+        tags: ["Serviços"],
         parameters: [
           {
             name: "id",
             in: "path",
             required: true,
             schema: { type: "number" },
-            description: "ID do servio",
+            description: "ID do serviço",
           },
         ],
         responses: {
-          "200": { description: "Servio encontrado" },
-          "404": { description: "Servio no encontrado" },
+          "200": { description: "Serviço encontrado" },
+          "404": { description: "Serviço não encontrado" },
           "500": { description: "Erro interno no servidor" },
         },
       },
       put: {
-        summary: "Atualiza um servio",
-        tags: ["Servios"],
+        summary: "Atualiza um serviço",
+        tags: ["Serviços"],
         parameters: [
           {
             name: "id",
             in: "path",
             required: true,
             schema: { type: "number" },
-            description: "ID do servio",
+            description: "ID do serviço",
           },
         ],
         requestBody: {
@@ -861,7 +861,7 @@ export const swaggerDocs = {
                 properties: {
                   barbearia_id: { type: "number" },
                   nome_servico: { type: "string" },
-                  preco: { type: "string" },
+                  preço: { type: "string" },
                   duracao_min: { type: "number" },
                 },
               },
@@ -869,26 +869,26 @@ export const swaggerDocs = {
           },
         },
         responses: {
-          "200": { description: "Servio atualizado com sucesso" },
-          "404": { description: "Servio no encontrado" },
+          "200": { description: "Serviço atualizado com sucesso" },
+          "404": { description: "Serviço não encontrado" },
           "500": { description: "Erro interno no servidor" },
         },
       },
       delete: {
-        summary: "Exclui um servio",
-        tags: ["Servios"],
+        summary: "Exclui um serviço",
+        tags: ["Serviços"],
         parameters: [
           {
             name: "id",
             in: "path",
             required: true,
             schema: { type: "number" },
-            description: "ID do servio",
+            description: "ID do serviço",
           },
         ],
         responses: {
-          "200": { description: "Servio excludo com sucesso" },
-          "404": { description: "Servio no encontrado" },
+          "200": { description: "Serviço excluído com sucesso" },
+          "404": { description: "Serviço não encontrado" },
           "500": { description: "Erro interno no servidor" },
         },
       },
@@ -917,10 +917,10 @@ export const swaggerDocs = {
         },
         responses: {
           "201": { description: "Agendamento realizado com sucesso" },
-          "400": { description: "Dados invlidos ou horrio fora do funcionamento" },
-          "401": { description: "No autenticado" },
-          "404": { description: "Barbearia ou barbeiro no encontrado" },
-          "409": { description: "Horrio j ocupado para esse barbeiro" },
+          "400": { description: "Dados inválidos ou horário fora do funcionamento" },
+          "401": { description: "Não autenticado" },
+          "404": { description: "Barbearia ou barbeiro não encontrado" },
+          "409": { description: "Horário já ocupado para esse barbeiro" },
         },
       },
     },
@@ -931,13 +931,13 @@ export const swaggerDocs = {
         security: [{ bearerAuth: [] }],
         responses: {
           "200": { description: "Agendamentos do cliente" },
-          "401": { description: "No autenticado" },
+          "401": { description: "Não autenticado" },
         },
       },
     },
     "/api/agendamentos/available-slots": {
       get: {
-        summary: "Lista horrios disponveis em blocos fixos de 60 minutos",
+        summary: "Lista horários disponíveis em blocos fixos de 60 minutos",
         tags: ["Agendamentos"],
         parameters: [
           { name: "barbearia_id", in: "query", required: true, schema: { type: "number" } },
@@ -950,15 +950,15 @@ export const swaggerDocs = {
           },
         ],
         responses: {
-          "200": { description: "Lista de horrios disponveis" },
-          "400": { description: "Parmetros invlidos" },
-          "404": { description: "Barbearia no encontrada" },
+          "200": { description: "Lista de horários disponíveis" },
+          "400": { description: "Parâmetros inválidos" },
+          "404": { description: "Barbearia não encontrada" },
         },
       },
     },
     "/api/agendamentos/check-availability": {
       get: {
-        summary: "Verifica se um horrio especfico est disponvel para o barbeiro",
+        summary: "Verifica se um horário específico está disponível para o barbeiro",
         tags: ["Agendamentos"],
         parameters: [
           { name: "barbearia_id", in: "query", required: true, schema: { type: "number" } },
@@ -972,28 +972,28 @@ export const swaggerDocs = {
         ],
         responses: {
           "200": { description: "Disponibilidade retornada" },
-          "400": { description: "Parmetros invlidos" },
+          "400": { description: "Parâmetros inválidos" },
         },
       },
     },
     "/api/barbearias/{id}/agendamento-config": {
       get: {
-        summary: "Obtm configurao de agendamento da barbearia (funcionamento e intervalo)",
+        summary: "Obtém configuração de agendamento da barbearia (funcionamento e intervalo)",
         tags: ["Barbearias"],
         security: [{ bearerAuth: [] }],
         parameters: [
           { name: "id", in: "path", required: true, schema: { type: "number" } },
         ],
         responses: {
-          "200": { description: "Configurao carregada" },
-          "401": { description: "No autenticado" },
-          "404": { description: "Barbearia no encontrada para o usurio" },
+          "200": { description: "Configuração carregada" },
+          "401": { description: "Não autenticado" },
+          "404": { description: "Barbearia não encontrada para o usuário" },
         },
       },
     },
     "/api/barbearias/{id}/agendamentos": {
       get: {
-        summary: "Lista os agendamentos de um barbeiro da barbearia em um dia especfico",
+        summary: "Lista os agendamentos de um barbeiro da barbearia em um dia específico",
         tags: ["Barbearias"],
         security: [{ bearerAuth: [] }],
         parameters: [
@@ -1003,30 +1003,30 @@ export const swaggerDocs = {
         ],
         responses: {
           "200": { description: "Agendamentos do barbeiro no dia" },
-          "400": { description: "Parmetros invlidos" },
-          "401": { description: "No autenticado" },
-          "404": { description: "Barbearia no encontrada para o usurio" },
+          "400": { description: "Parâmetros inválidos" },
+          "401": { description: "Não autenticado" },
+          "404": { description: "Barbearia não encontrada para o usuário" },
         },
       },
     },
     "/api/barbearias/{id}/agendamentos/proximos": {
       get: {
-        summary: "Lista os prximos agendamentos da barbearia considerando todos os barbeiros",
+        summary: "Lista os próximos agendamentos da barbearia considerando todos os barbeiros",
         tags: ["Barbearias"],
         security: [{ bearerAuth: [] }],
         parameters: [
           { name: "id", in: "path", required: true, schema: { type: "number" } },
         ],
         responses: {
-          "200": { description: "Prximos agendamentos" },
-          "401": { description: "No autenticado" },
-          "404": { description: "Barbearia no encontrada para o usurio" },
+          "200": { description: "Próximos agendamentos" },
+          "401": { description: "Não autenticado" },
+          "404": { description: "Barbearia não encontrada para o usuário" },
         },
       },
     },
     "/api/barbearias/{id}/funcionamento": {
       put: {
-        summary: "Define horrios de funcionamento por dia da semana",
+        summary: "Define horários de funcionamento por dia da semana",
         tags: ["Barbearias"],
         security: [{ bearerAuth: [] }],
         parameters: [
@@ -1059,9 +1059,9 @@ export const swaggerDocs = {
         },
         responses: {
           "200": { description: "Funcionamento atualizado" },
-          "400": { description: "Payload invlido" },
-          "401": { description: "No autenticado" },
-          "404": { description: "Barbearia no encontrada para o usurio" },
+          "400": { description: "Payload inválido" },
+          "401": { description: "Não autenticado" },
+          "404": { description: "Barbearia não encontrada para o usuário" },
         },
       },
     },
@@ -1089,9 +1089,9 @@ export const swaggerDocs = {
         },
         responses: {
           "200": { description: "Intervalo atualizado" },
-          "400": { description: "Intervalo invlido" },
-          "401": { description: "No autenticado" },
-          "404": { description: "Barbearia no encontrada para o usurio" },
+          "400": { description: "Intervalo inválido" },
+          "401": { description: "Não autenticado" },
+          "404": { description: "Barbearia não encontrada para o usuário" },
         },
       },
     },

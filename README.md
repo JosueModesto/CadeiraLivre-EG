@@ -97,6 +97,7 @@ O backend usa TypeORM, com conexão única por padrão Singleton.
 
 ## Como Rodar o Projeto
 
+### Opção 1: Docker 
 Pré-requisitos:
 
 - Docker
@@ -104,19 +105,60 @@ Pré-requisitos:
 
 Passos:
 
-1. Na raiz do projeto, execute:
+1. Na raiz do projeto, copie o arquivo de ambiente:
+
+```bash
+cp .env.example .env
+```
+
+No Windows (PowerShell):
+
+```powershell
+Copy-Item .env.example .env
+```
+
+2. Suba os containers:
 
 ```bash
 docker compose up --build
 ```
 
-2. Acesse:
+3. Acesse:
 
 - Frontend: http://localhost:5173
 - Backend: http://localhost:3001
 - Swagger: http://localhost:3001/api-docs
 - PostgreSQL: localhost:5433
 
-Observação:
+Observações:
 
-- O seed é executado automaticamente quando DB_RUN_SEED está true no docker-compose.yml.
+- O seed é executado automaticamente quando `DB_RUN_SEED=true`.
+- As variáveis são lidas do arquivo `.env` na raiz do projeto (com fallback definido no `docker-compose.yml`).
+
+## Como Testar
+
+### Testes do backend via Docker
+
+```bash
+docker compose --profile test run --rm backend-test
+```
+
+### Teste do backend sem Docker 
+```bash
+cd backend
+npm test
+```
+
+### Comandos úteis de validação
+
+Validar configuração do Compose:
+
+```bash
+docker compose config
+```
+
+Parar containers:
+
+```bash
+docker compose down
+```

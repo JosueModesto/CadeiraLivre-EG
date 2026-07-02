@@ -7,7 +7,9 @@
     "scripts": {
         "dev": "nodemon --exec tsx src/index.ts",
         "start": "tsx src/index.ts",
-        "seed": "tsx src/seed.ts"
+        "seed": "tsx src/seed.ts",
+        "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
+        "test:watch": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --watch"
     },
     "dependencies": {
         "@types/bcryptjs": "^2.4.6",
@@ -25,8 +27,11 @@
     },
     "devDependencies": {
         "@types/express": "^5.0.6",
+        "@types/jest": "^30.0.0",
+        "jest": "^30.0.5",
         "nodemon": "^3.1.4",
         "ts-node": "^10.9.2",
+        "ts-jest": "^29.4.0",
         "tsx": "^4.7.0",
         "typescript": "^6.0.3"
     }

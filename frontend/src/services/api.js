@@ -22,7 +22,7 @@ apiClient.interceptors.request.use(
     return Promise.reject(error);
   }
 );
-
+// Interceptor para lidar com erros de autenticação
 export const authService = {
   register: async (data) => {
     const response = await apiClient.post("/api/auth/register", data);

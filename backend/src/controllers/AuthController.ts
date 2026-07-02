@@ -3,12 +3,14 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { DatabaseSingleton } from "../padrao/singleton";
 import { TipoUsuario, Usuario } from "../entities/Usuario";
+import { nomeSemNumerosESimbolos, telefoneSomenteNumeros } from "../utils/validation";
 
 const db = DatabaseSingleton.getInstance();
 
 const JWT_SECRET = process.env.JWT_SECRET || "chave_secreta_barbearia_123";
 
 export class AuthController {
+  //Método para registrar um novo usuário
   async register(req: Request, res: Response): Promise<Response> {
     try {
       const { nome, email, senha, telefone, endereco, tipo_usuario, cidade_id } = req.body;
@@ -16,6 +18,18 @@ export class AuthController {
       if (!nome || !email || !senha || !telefone || !tipo_usuario) {
         return res.status(400).json({
           message: "Campos obrigatórios faltando",
+        });
+      }
+
+      if (!nomeSemNumerosESimbolos(nome)) {
+        return res.status(400).json({
+          message: "Nome deve conter apenas letras e espaços",
+        });
+      }
+
+      if (!telefoneSomenteNumeros(telefone)) {
+        return res.status(400).json({
+          message: "Telefone deve conter apenas números",
         });
       }
 
@@ -47,10 +61,10 @@ export class AuthController {
       const senhaHash = await bcrypt.hash(senha, 10);
 
       const novoUsuario = usuarioRepository.create({
-        nome,
+        nome: String(nome).trim(),
         email,
         senha: senhaHash,
-        telefone,
+        telefone: String(telefone).trim(),
         endereco: endereco || null,
         tipo_usuario,
         cidade_id: cidade_id || null,
@@ -76,6 +90,7 @@ export class AuthController {
     }
   }
 
+  //Método para autenticar um usuário
   async login(req: Request, res: Response): Promise<Response> {
     try {
       const { email } = req.body;

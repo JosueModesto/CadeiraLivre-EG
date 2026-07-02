@@ -44,7 +44,7 @@ export class AgendamentoService {
     const m = String(min % 60).padStart(2, "0");
     return `${h}:${m}:00`;
   }
-
+  // Método para intersectar janelas de funcionamento da barbearia e disponibilidade do barbeiro
   private intersectarJanelas(base: Janela[], restricoes: Janela[]): Janela[] {
     const resultado: Janela[] = [];
     for (const janelaBase of base) {
@@ -69,7 +69,7 @@ export class AgendamentoService {
 
     return resultado;
   }
-
+  // Método para obter as janelas de funcionamento da barbearia e disponibilidade do barbeiro para um determinado dia da semana
   private async obterJanelasDoDia(barbearia_id: number, barbeiro_id: number, diaSemana: number): Promise<Janela[]> {
     const funcionamentos = await this.funcionamentoRepo.find({
       where: { barbearia_id, dia_semana: diaSemana, esta_aberto: true },
@@ -85,8 +85,8 @@ export class AgendamentoService {
       order: { hora_inicio: "ASC" },
     });
 
-    const temRestricaoAtiva = disponibilidades.some((d) => d.esta_disponivel && d.hora_inicio && d.hora_fim);
-    if (!temRestricaoAtiva) {
+    // Sem configuração do barbeiro para o dia: usa funcionamento da barbearia.
+    if (disponibilidades.length === 0) {
       return janelasBarbearia;
     }
 
@@ -94,9 +94,14 @@ export class AgendamentoService {
       .filter((d) => d.esta_disponivel && d.hora_inicio && d.hora_fim)
       .map((d) => ({ hora_abertura: d.hora_inicio!, hora_fechamento: d.hora_fim! }));
 
+    // Com configuração explícita e sem janela ativa: dia indisponível para o barbeiro.
+    if (janelasBarbeiro.length === 0) {
+      return [];
+    }
+
     return this.intersectarJanelas(janelasBarbearia, janelasBarbeiro);
   }
-
+  //Método para obter os agendamentos do barbeiro em um determinado dia, para verificar conflitos de horário
   private async obterAgendamentosDoDia(barbeiro_id: number, inicio: Date) {
     const diaInicio = new Date(inicio);
     diaInicio.setHours(0, 0, 0, 0);
@@ -112,6 +117,7 @@ export class AgendamentoService {
     });
   }
 
+  //Método para criar um novo agendamento
   async criarAgendamento(input: CriarAgendamentoInput) {
     const { cliente_id, barbearia_id, barbeiro_id, servico_ids, data_hora_inicio } = input;
 
@@ -180,7 +186,7 @@ export class AgendamentoService {
 
     return { agendamento: agendamentoCompleto, status: 201 } as const;
   }
-
+  //Método para cancelar um agendamento feito pelo cliente
   async cancelarAgendamento(agendamentoId: number, clienteId: number) {
     const agendamento = await this.agendamentoRepo.findOne({
       where: { id: agendamentoId, cliente_id: clienteId },
@@ -226,7 +232,7 @@ export class AgendamentoService {
 
     return { agendamento: atualizado, status: 200 } as const;
   }
-
+  //Método para obter os horários disponíveis para agendamento em uma barbearia e barbeiro específicos em uma data específica
   async getSlotsDisponiveis(barbearia_id: number, barbeiro_id: number, data: string) {
     const barbearia = await this.barbeariaRepo.findOne({ where: { id: barbearia_id } });
     if (!barbearia) {

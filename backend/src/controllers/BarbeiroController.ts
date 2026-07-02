@@ -4,6 +4,7 @@ import { Barbearia } from "../entities/Barbearia";
 import { Barbeiro } from "../entities/Barbeiro";
 import { BarbeiroDisponibilidade } from "../entities/BarbeiroDisponibilidade";
 import { AuthRequest } from "../middlewares/auth.middleware";
+import { nomeSemNumerosESimbolos, telefoneSomenteNumeros } from "../utils/validation";
 
 const db = DatabaseSingleton.getInstance();
 
@@ -22,7 +23,7 @@ export class BarbeiroController {
 		const [h, m] = hora.split(":").map(Number);
 		return h * 60 + m;
 	}
-
+	//Método para obter a disponibilidade de um barbeiro
 	async getDisponibilidade(req: Request, res: Response): Promise<Response> {
 		try {
 			const barbeiroId = Number(req.params.id);
@@ -41,7 +42,7 @@ export class BarbeiroController {
 			});
 		}
 	}
-
+	//Método para definir a disponibilidade de um barbeiro
 	async setDisponibilidade(req: AuthRequest, res: Response): Promise<Response> {
 		try {
 			const barbeiroId = Number(req.params.id);
@@ -165,7 +166,7 @@ export class BarbeiroController {
 			});
 		}
 	}
-
+	//Método para criar um novo barbeiro
 	async create(req: Request, res: Response): Promise<Response> {
 		const { barbearia_id, nome, telefone, ativo } = req.body;
 
@@ -175,12 +176,20 @@ export class BarbeiroController {
 			});
 		}
 
+		if (!nomeSemNumerosESimbolos(nome)) {
+			return res.status(400).json({ message: "Nome deve conter apenas letras e espaços" });
+		}
+
+		if (!telefoneSomenteNumeros(telefone)) {
+			return res.status(400).json({ message: "Telefone deve conter apenas números" });
+		}
+
 		try {
 			const barbeiroRepository = db.getRepository(Barbeiro);
 			const novoBarbeiro = barbeiroRepository.create({
 				barbearia_id,
-				nome,
-				telefone,
+				nome: String(nome).trim(),
+				telefone: String(telefone).trim(),
 				ativo: ativo ?? true,
 			});
 
@@ -197,7 +206,7 @@ export class BarbeiroController {
 			});
 		}
 	}
-
+	//Método para obter todos os barbeiros, com filtro opcional por barbearia
 	async getAll(req: Request, res: Response): Promise<Response> {
 		try {
 			const { barbearia_id } = req.query;
@@ -229,7 +238,7 @@ export class BarbeiroController {
 			});
 		}
 	}
-
+	//Método para obter um barbeiro pelo ID
 	async getById(req: Request, res: Response): Promise<Response> {
 		try {
 			const { id } = req.params;
@@ -254,7 +263,7 @@ export class BarbeiroController {
 			});
 		}
 	}
-
+	//Método para atualizar os detalhes de um barbeiro
 	async update(req: Request, res: Response): Promise<Response> {
 		try {
 			const { id } = req.params;
@@ -271,9 +280,17 @@ export class BarbeiroController {
 				});
 			}
 
+			if (nome !== undefined && !nomeSemNumerosESimbolos(nome)) {
+				return res.status(400).json({ message: "Nome deve conter apenas letras e espaços" });
+			}
+
+			if (telefone !== undefined && !telefoneSomenteNumeros(telefone)) {
+				return res.status(400).json({ message: "Telefone deve conter apenas números" });
+			}
+
 			if (barbearia_id !== undefined) barbeiro.barbearia_id = barbearia_id;
-			if (nome) barbeiro.nome = nome;
-			if (telefone) barbeiro.telefone = telefone;
+			if (nome) barbeiro.nome = String(nome).trim();
+			if (telefone) barbeiro.telefone = String(telefone).trim();
 			if (ativo !== undefined) barbeiro.ativo = ativo;
 
 			const barbeiroAtualizado = await barbeiroRepository.save(barbeiro);
@@ -289,7 +306,7 @@ export class BarbeiroController {
 			});
 		}
 	}
-
+	//Método para deletar um barbeiro
 	async delete(req: Request, res: Response): Promise<Response> {
 		try {
 			const { id } = req.params;

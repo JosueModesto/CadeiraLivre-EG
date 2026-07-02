@@ -1,12 +1,3 @@
-/**
- * Lgica pura de disponibilidade de horrios.
- *
- * Esta classe NO acessa banco de dados nem repositrios do TypeORM.
- * Ela recebe os dados j carregados (janelas de funcionamento e agendamentos
- * j existentes) e devolve clculos determinsticos. Isso permite testar
- * 100% das regras de negcio com testes de unidade rpidos, sem mocks de DB.
- */
-
 export interface Janela {
   hora_abertura: string; // "HH:mm"
   hora_fechamento: string; // "HH:mm"
@@ -18,27 +9,23 @@ export interface AgendamentoExistente {
 }
 
 export class AgendamentoDisponibilidadeService {
-  /** Durao fixa de cada slot de agendamento, em minutos.
-   *  Esse valor  independente da durao dos servios escolhidos pelo cliente. */
-  static readonly DURACAO_PADRAO_MINUTOS = 60;
 
+  static readonly DURACAO_PADRAO_MINUTOS = 60;
+  // Método para obter os minutos de uma data
   obterMinutosDaData(data: Date): number {
     return data.getHours() * 60 + data.getMinutes();
   }
-
+  // Método para obter os minutos de uma hora no formato "HH:mm"
   obterMinutosDaHora(hora: string): number {
     const [horaNumero, minutoNumero] = hora.split(":").map(Number);
     return horaNumero * 60 + minutoNumero;
   }
-
+  // Método para somar minutos a uma data
   somarMinutos(dataBase: Date, minutos: number): Date {
     return new Date(dataBase.getTime() + minutos * 60000);
   }
 
-  /**
-   * Verifica se o intervalo [inicio, fim) est contido em alguma das janelas
-   * de funcionamento do dia. Retorna null se vlido, ou uma mensagem de erro.
-   */
+  // Método para validar se um intervalo de tempo está dentro das janelas de funcionamento
   validarJanelaFuncionamento(janelas: Janela[], inicio: Date, fim: Date): string | null {
     if (!janelas || janelas.length === 0) {
       return "A barbearia no atende neste dia";
@@ -59,11 +46,7 @@ export class AgendamentoDisponibilidadeService {
 
     return null;
   }
-
-  /**
-   * Valida se o horrio de incio pertence  grade de slots da barbearia
-   * para a durao informada.
-   */
+  // Método para verificar se um horário de início e duração está alinhado com os slots disponíveis
   estaNoGridDeSlots(janelas: Janela[], inicio: Date, duracaoMinutos: number): boolean {
     const inicioMin = this.obterMinutosDaData(inicio);
     const fimMin = inicioMin + duracaoMinutos;
@@ -80,10 +63,7 @@ export class AgendamentoDisponibilidadeService {
     });
   }
 
-  /**
-   * Verifica se [inicio, fim) conflita com algum agendamento j existente
-   * (sobreposio de intervalos).
-   */
+  // Método para verificar se há conflito entre agendamentos existentes e um novo horário
   temConflito(agendamentos: AgendamentoExistente[], inicio: Date, fim: Date): boolean {
     return agendamentos.some(
       (agendamento) =>
@@ -91,11 +71,7 @@ export class AgendamentoDisponibilidadeService {
     );
   }
 
-  /**
-   * Gera todos os slots de horrio possveis dentro das janelas de
-   * funcionamento de um dia, com durao fixa, excluindo os que j tm
-   * conflito com agendamentos existentes.
-   */
+  // Método para gerar os slots disponíveis para agendamento com base nas janelas de funcionamento e agendamentos existentes
   gerarSlotsDisponiveis(
     data: string, // "YYYY-MM-DD"
     janelas: Janela[],
