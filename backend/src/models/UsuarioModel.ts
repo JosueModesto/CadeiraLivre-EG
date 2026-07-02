@@ -6,6 +6,7 @@ export interface UsuarioModel {
   email: string;
   senha: string;
   telefone: string;
+  endereco?: string | null;
   tipo_usuario: TipoUsuarioModel;
   cidade_id?: number | null;
   criado_em: Date;

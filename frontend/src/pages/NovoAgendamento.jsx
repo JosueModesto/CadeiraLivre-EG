@@ -1,393 +1,354 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import { agendamentoService } from "../services/agendamentoService";
 import { barbeariaService } from "../services/barbeariaService";
 import { barbeiroService } from "../services/barbeiroService";
 import { servicoService } from "../services/servicoService";
+import Navbar from "../components/Navbar";
 
 function formatarHorario(valor) {
-	return new Intl.DateTimeFormat("pt-BR", {
-		timeStyle: "short",
-	}).format(new Date(valor));
+  return new Intl.DateTimeFormat("pt-BR", { timeStyle: "short" }).format(new Date(valor));
 }
 
 function formatarMoeda(valor) {
-	return new Intl.NumberFormat("pt-BR", {
-		style: "currency",
-		currency: "BRL",
-	}).format(Number(valor || 0));
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(valor || 0));
 }
 
 export default function NovoAgendamento() {
-	const navigate = useNavigate();
-	const [barbearias, setBarbearias] = useState([]);
-	const [barbeiros, setBarbeiros] = useState([]);
-	const [servicos, setServicos] = useState([]);
-	const [horarios, setHorarios] = useState([]);
-	const [loadingInicial, setLoadingInicial] = useState(true);
-	const [loadingHorarios, setLoadingHorarios] = useState(false);
-	const [submitting, setSubmitting] = useState(false);
-	const [error, setError] = useState("");
-	const [success, setSuccess] = useState("");
-	const [form, setForm] = useState({
-		barbearia_id: "",
-		barbeiro_id: "",
-		data: "",
-		servico_ids: [],
-		data_hora_inicio: "",
-	});
+  const { barbeariaId } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
-	useEffect(() => {
-		async function carregarBarbearias() {
-			setLoadingInicial(true);
-			setError("");
+  const [barbeariaSelecionada, setBarbeariaSelecionada] = useState(null);
+  const [barbeiros, setBarbeiros] = useState([]);
+  const [servicos, setServicos] = useState([]);
+  const [horarios, setHorarios] = useState([]);
+  const [loadingInicial, setLoadingInicial] = useState(true);
+  const [loadingHorarios, setLoadingHorarios] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [form, setForm] = useState({
+    barbearia_id: barbeariaId || "",
+    barbeiro_id: "",
+    data: "",
+    servico_ids: [],
+    data_hora_inicio: "",
+  });
 
-			try {
-				const response = await barbeariaService.getAll();
-				setBarbearias(response.barbearias || []);
-			} catch (err) {
-				setError(err.response?.data?.message || "Erro ao carregar barbearias");
-			} finally {
-				setLoadingInicial(false);
-			}
-		}
+  useEffect(() => {
+    async function carregarDadosIniciais() {
+      if (!barbeariaId) {
+        setError("Barbearia não informada para o agendamento.");
+        setLoadingInicial(false);
+        return;
+      }
 
-		carregarBarbearias();
-	}, []);
+      setLoadingInicial(true);
+      setError("");
 
-	useEffect(() => {
-		async function carregarDependencias() {
-			if (!form.barbearia_id) {
-				setBarbeiros([]);
-				setServicos([]);
-				return;
-			}
+      try {
+        const [barbeariaResponse, barbeirosResponse, servicosResponse] = await Promise.all([
+          barbeariaService.getById(barbeariaId),
+          barbeiroService.getAll({ barbearia_id: barbeariaId }),
+          servicoService.getAll({ barbearia_id: barbeariaId }),
+        ]);
 
-			setError("");
-			setSuccess("");
+        setBarbeariaSelecionada(barbeariaResponse.barbearia || null);
+        setBarbeiros((barbeirosResponse.barbeiros || []).filter((item) => item.ativo));
+        setServicos(servicosResponse.servicos || []);
+        setForm((current) => ({ ...current, barbearia_id: String(barbeariaId) }));
+      } catch (err) {
+        setError(err.response?.data?.message || "Erro ao carregar dados da barbearia.");
+      } finally {
+        setLoadingInicial(false);
+      }
+    }
 
-			try {
-				const [barbeirosResponse, servicosResponse] = await Promise.all([
-					barbeiroService.getAll({ barbearia_id: form.barbearia_id }),
-					servicoService.getAll({ barbearia_id: form.barbearia_id }),
-				]);
+    carregarDadosIniciais();
+  }, [barbeariaId]);
 
-				setBarbeiros((barbeirosResponse.barbeiros || []).filter((item) => item.ativo));
-				setServicos(servicosResponse.servicos || []);
-			} catch (err) {
-				setError(err.response?.data?.message || "Erro ao carregar barbeiros e serviços");
-			}
-		}
+  useEffect(() => {
+    async function carregarHorarios() {
+      if (!form.barbearia_id || !form.barbeiro_id || !form.data) {
+        setHorarios([]);
+        return;
+      }
 
-		carregarDependencias();
-	}, [form.barbearia_id]);
+      setLoadingHorarios(true);
+      setError("");
 
-	useEffect(() => {
-		async function carregarHorarios() {
-			if (!form.barbearia_id || !form.barbeiro_id || !form.data) {
-				setHorarios([]);
-				return;
-			}
+      try {
+        const response = await agendamentoService.getAvailableSlots({
+          barbearia_id: form.barbearia_id,
+          barbeiro_id: form.barbeiro_id,
+          data: form.data,
+        });
 
-			setLoadingHorarios(true);
-			setError("");
+        setHorarios(response.horarios || []);
+        setForm((current) => ({
+          ...current,
+          data_hora_inicio: (response.horarios || []).includes(current.data_hora_inicio)
+            ? current.data_hora_inicio
+            : "",
+        }));
+      } catch (err) {
+        setHorarios([]);
+        setError(err.response?.data?.message || "Erro ao buscar horários disponíveis.");
+      } finally {
+        setLoadingHorarios(false);
+      }
+    }
 
-			try {
-				const response = await agendamentoService.getAvailableSlots({
-					barbearia_id: form.barbearia_id,
-					barbeiro_id: form.barbeiro_id,
-					data: form.data,
-				});
+    carregarHorarios();
+  }, [form.barbearia_id, form.barbeiro_id, form.data]);
 
-				setHorarios(response.horarios || []);
-				setForm((current) => ({
-					...current,
-					data_hora_inicio: (response.horarios || []).includes(current.data_hora_inicio)
-						? current.data_hora_inicio
-						: "",
-				}));
-			} catch (err) {
-				setHorarios([]);
-				setError(err.response?.data?.message || "Erro ao buscar horários disponíveis");
-			} finally {
-				setLoadingHorarios(false);
-			}
-		}
+  function atualizarCampo(campo, valor) {
+    setForm((current) => ({ ...current, [campo]: valor }));
+    setError("");
+    setSuccess("");
+  }
 
-		carregarHorarios();
-	}, [form.barbearia_id, form.barbeiro_id, form.data]);
+  function alternarServico(servicoId) {
+    setForm((current) => {
+      const existe = current.servico_ids.includes(servicoId);
+      return {
+        ...current,
+        servico_ids: existe
+          ? current.servico_ids.filter((id) => id !== servicoId)
+          : [...current.servico_ids, servicoId],
+      };
+    });
+    setError("");
+    setSuccess("");
+  }
 
-	function atualizarCampo(campo, valor) {
-		setForm((current) => ({ ...current, [campo]: valor }));
-		setError("");
-		setSuccess("");
-	}
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setError("");
+    setSuccess("");
 
-	function alternarServico(servicoId) {
-		setForm((current) => {
-			const existe = current.servico_ids.includes(servicoId);
-			return {
-				...current,
-				servico_ids: existe
-					? current.servico_ids.filter((id) => id !== servicoId)
-					: [...current.servico_ids, servicoId],
-			};
-		});
-		setError("");
-		setSuccess("");
-	}
+    if (!form.barbearia_id || !form.barbeiro_id || !form.data || !form.data_hora_inicio || form.servico_ids.length === 0) {
+      setError("Selecione barbeiro, data, horário e ao menos um serviço.");
+      return;
+    }
 
-	async function handleSubmit(event) {
-		event.preventDefault();
-		setError("");
-		setSuccess("");
+    setSubmitting(true);
 
-		if (!form.barbearia_id || !form.barbeiro_id || !form.data || !form.data_hora_inicio || form.servico_ids.length === 0) {
-			setError("Selecione barbearia, barbeiro, data, horário e ao menos um serviço.");
-			return;
-		}
+    try {
+      const disponibilidade = await agendamentoService.checkAvailability({
+        barbearia_id: form.barbearia_id,
+        barbeiro_id: form.barbeiro_id,
+        data_hora_inicio: form.data_hora_inicio,
+      });
 
-		setSubmitting(true);
+      if (!disponibilidade.disponivel) {
+        setError("Esse horário acabou de ser ocupado. Escolha outro horário.");
+        return;
+      }
 
-		try {
-			const disponibilidade = await agendamentoService.checkAvailability({
-				barbearia_id: form.barbearia_id,
-				barbeiro_id: form.barbeiro_id,
-				data_hora_inicio: form.data_hora_inicio,
-			});
+      const response = await agendamentoService.create({
+        barbearia_id: Number(form.barbearia_id),
+        barbeiro_id: Number(form.barbeiro_id),
+        servico_ids: form.servico_ids,
+        data_hora_inicio: form.data_hora_inicio,
+      });
 
-			if (!disponibilidade.disponivel) {
-				setError("Esse horário acabou de ser ocupado. Escolha outro horário.");
-				return;
-			}
+      setSuccess(response.message || "Agendamento realizado com sucesso.");
+      setTimeout(() => navigate("/agendamentos"), 900);
+    } catch (err) {
+      setError(err.response?.data?.message || "Erro ao criar agendamento.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
-			const response = await agendamentoService.create({
-				barbearia_id: Number(form.barbearia_id),
-				barbeiro_id: Number(form.barbeiro_id),
-				servico_ids: form.servico_ids,
-				data_hora_inicio: form.data_hora_inicio,
-			});
+  const barbeiroSelecionado = barbeiros.find((item) => String(item.id) === String(form.barbeiro_id));
+  const valorTotal = servicos
+    .filter((servico) => form.servico_ids.includes(servico.id))
+    .reduce((total, servico) => total + Number(servico.preco), 0);
 
-			setSuccess(response.message || "Agendamento realizado com sucesso.");
-			setTimeout(() => navigate("/agendamentos"), 900);
-		} catch (err) {
-			setError(err.response?.data?.message || "Erro ao criar agendamento");
-		} finally {
-			setSubmitting(false);
-		}
-	}
+  if (user?.tipo_usuario === "barbearia") {
+    return <Navigate to="/dashboard" replace />;
+  }
 
-	const barbeiroSelecionado = barbeiros.find((item) => String(item.id) === String(form.barbeiro_id));
-	const valorTotal = servicos
-		.filter((servico) => form.servico_ids.includes(servico.id))
-		.reduce((total, servico) => total + Number(servico.preco), 0);
+  if (!barbeariaId) {
+    return <Navigate to="/novo-agendamento" replace />;
+  }
 
-	return (
-		<div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-white">
-			<nav className="bg-white shadow-lg text-gray-900">
-				<div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
-					<button
-						onClick={() => navigate("/dashboard")}
-						className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium transition hover:bg-slate-100"
-					>
-						Voltar
-					</button>
-					<h1 className="text-2xl font-bold">Novo agendamento</h1>
-					<button
-						onClick={() => navigate("/agendamentos")}
-						className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
-					>
-						Ver agendamentos
-					</button>
-				</div>
-			</nav>
+  return (
+    <div className="app-shell">
+      <Navbar title="Novo agendamento" onBack={() => navigate("/novo-agendamento")} />
 
-			<main className="mx-auto grid max-w-7xl gap-6 px-4 py-8 lg:grid-cols-[1.35fr_0.85fr]">
-				<section className="rounded-2xl bg-white p-6 text-slate-900 shadow-xl">
-					<h2 className="text-2xl font-bold">Reserve seu horário</h2>
-					<p className="mt-2 text-sm text-slate-500">Selecione a barbearia, o barbeiro, os serviços e um horário liberado pela agenda.</p>
+      <main className="container page fade-in">
+        <h1 className="page-title">Reserve seu horário</h1>
+        <p className="muted mt-2">Escolha barbeiro, serviços e horário para a barbearia selecionada.</p>
 
-					{loadingInicial ? (
-						<div className="mt-6 rounded-xl bg-slate-50 p-6 text-center text-slate-500">Carregando dados iniciais...</div>
-					) : (
-						<form onSubmit={handleSubmit} className="mt-6 space-y-6">
-							<div className="grid gap-5 md:grid-cols-2">
-								<label className="block">
-									<span className="mb-2 block text-sm font-semibold text-slate-700">Barbearia</span>
-									<select
-										value={form.barbearia_id}
-										onChange={(event) => {
-											const valor = event.target.value;
-											setForm({
-												barbearia_id: valor,
-												barbeiro_id: "",
-												data: "",
-												servico_ids: [],
-												data_hora_inicio: "",
-											});
-											setHorarios([]);
-										}}
-										className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-blue-500"
-									>
-										<option value="">Selecione</option>
-										{barbearias.map((barbearia) => (
-											<option key={barbearia.id} value={barbearia.id}>
-												{barbearia.nome_comercial}
-											</option>
-										))}
-									</select>
-								</label>
+        <div className="grid mt-6" style={{ gridTemplateColumns: "minmax(0, 1.4fr) minmax(0, 0.9fr)" }}>
+          <section className="card">
+            {loadingInicial ? (
+              <div className="center" style={{ padding: "24px" }}>
+                <div className="spinner" style={{ margin: "0 auto 16px" }} />
+                <p className="muted">Carregando dados...</p>
+              </div>
+            ) : (
+              <>
+                <div className="between" style={{ gap: "12px", alignItems: "center" }}>
+                  <div>
+                    <p className="section-label">Barbearia selecionada</p>
+                    <p className="mt-2" style={{ fontWeight: 700 }}>{barbeariaSelecionada?.nome_comercial || "—"}</p>
+                    <p className="faint mt-2" style={{ fontSize: "0.82rem" }}>{barbeariaSelecionada?.endereco || ""}</p>
+                  </div>
+                  <button type="button" className="btn btn--ghost btn--sm" onClick={() => navigate("/novo-agendamento")}>Trocar</button>
+                </div>
 
-								<label className="block">
-									<span className="mb-2 block text-sm font-semibold text-slate-700">Barbeiro</span>
-									<select
-										value={form.barbeiro_id}
-										onChange={(event) => atualizarCampo("barbeiro_id", event.target.value)}
-										disabled={!form.barbearia_id}
-										className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-blue-500 disabled:bg-slate-100"
-									>
-										<option value="">Selecione</option>
-										{barbeiros.map((barbeiro) => (
-											<option key={barbeiro.id} value={barbeiro.id}>
-												{barbeiro.nome}
-											</option>
-										))}
-									</select>
-								</label>
-							</div>
+                <form onSubmit={handleSubmit} className="stack stack-5 mt-5">
+                  <div className="field">
+                    <label>Barbeiro</label>
+                    <select
+                      value={form.barbeiro_id}
+                      onChange={(event) => atualizarCampo("barbeiro_id", event.target.value)}
+                      disabled={!form.barbearia_id}
+                    >
+                      <option value="">Selecione</option>
+                      {barbeiros.map((barbeiro) => (
+                        <option key={barbeiro.id} value={barbeiro.id}>{barbeiro.nome}</option>
+                      ))}
+                    </select>
+                  </div>
 
-							<label className="block">
-								<span className="mb-2 block text-sm font-semibold text-slate-700">Data</span>
-								<input
-									type="date"
-									value={form.data}
-									min={new Date().toISOString().slice(0, 10)}
-									onChange={(event) => atualizarCampo("data", event.target.value)}
-									disabled={!form.barbearia_id || !form.barbeiro_id}
-									className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-blue-500 disabled:bg-slate-100"
-								/>
-							</label>
+                  <div className="field">
+                    <label>Data</label>
+                    <input
+                      type="date"
+                      value={form.data}
+                      min={new Date().toISOString().slice(0, 10)}
+                      onChange={(event) => atualizarCampo("data", event.target.value)}
+                      disabled={!form.barbearia_id || !form.barbeiro_id}
+                    />
+                  </div>
 
-							<div>
-								<div className="mb-2 flex items-center justify-between">
-									<span className="block text-sm font-semibold text-slate-700">Serviços</span>
-									<span className="text-sm text-slate-500">Selecione um ou mais</span>
-								</div>
-								<div className="grid gap-3 md:grid-cols-2">
-									{servicos.map((servico) => {
-										const ativo = form.servico_ids.includes(servico.id);
-										return (
-											<button
-												key={servico.id}
-												type="button"
-												onClick={() => alternarServico(servico.id)}
-												className={`rounded-xl border p-4 text-left transition ${
-													ativo
-														? "border-blue-600 bg-blue-50"
-														: "border-slate-200 bg-white hover:border-slate-300"
-												}`}
-											>
-												<div className="flex items-start justify-between gap-4">
-													<div>
-														<p className="font-semibold text-slate-900">{servico.nome_servico}</p>
-														<p className="mt-1 text-sm text-slate-500">Duração informativa: {servico.duracao_min} min</p>
-													</div>
-													<span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white">
-														{formatarMoeda(servico.preco)}
-													</span>
-												</div>
-											</button>
-										);
-									})}
-								</div>
-							</div>
+                  <div>
+                    <div className="between" style={{ marginBottom: "12px" }}>
+                      <span className="field-label">Serviços</span>
+                      <span className="faint" style={{ fontSize: "0.8rem" }}>Selecione um ou mais</span>
+                    </div>
+                    {servicos.length === 0 ? (
+                      <p className="muted" style={{ fontSize: "0.88rem" }}>Nenhum serviço disponível para esta barbearia.</p>
+                    ) : (
+                      <div className="grid grid-2">
+                        {servicos.map((servico) => {
+                          const ativo = form.servico_ids.includes(servico.id);
+                          return (
+                            <button
+                              key={servico.id}
+                              type="button"
+                              onClick={() => alternarServico(servico.id)}
+                              className="card"
+                              style={{
+                                padding: "16px",
+                                textAlign: "left",
+                                cursor: "pointer",
+                                borderColor: ativo ? "var(--gold)" : "var(--line)",
+                                background: ativo ? "rgba(201, 162, 76, 0.1)" : "var(--wood-700)",
+                                boxShadow: "none",
+                              }}
+                            >
+                              <div className="between">
+                                <div>
+                                  <p style={{ fontWeight: 600 }}>{servico.nome_servico}</p>
+                                  <p className="faint mt-2" style={{ fontSize: "0.8rem" }}>{servico.duracao_min} min</p>
+                                </div>
+                                <span className="chip">{formatarMoeda(servico.preco)}</span>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
 
-							<div>
-								<div className="mb-2 flex items-center justify-between">
-									<span className="block text-sm font-semibold text-slate-700">Horários disponíveis</span>
-									{loadingHorarios ? <span className="text-sm text-slate-500">Consultando...</span> : null}
-								</div>
-								{!form.data ? (
-									<div className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Selecione a data para ver os horários disponíveis.</div>
-								) : horarios.length === 0 ? (
-									<div className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Nenhum horário disponível para os filtros selecionados.</div>
-								) : (
-									<div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-										{horarios.map((horario) => {
-											const ativo = form.data_hora_inicio === horario;
-											return (
-												<button
-													key={horario}
-													type="button"
-													onClick={() => atualizarCampo("data_hora_inicio", horario)}
-													className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${
-														ativo
-															? "border-blue-600 bg-blue-600 text-white"
-															: "border-slate-200 bg-white text-slate-900 hover:border-slate-300"
-													}`}
-												>
-													{formatarHorario(horario)}
-												</button>
-											);
-										})}
-									</div>
-								)}
-							</div>
+                  <div>
+                    <div className="between" style={{ marginBottom: "12px" }}>
+                      <span className="field-label">Horários disponíveis</span>
+                      {loadingHorarios ? <span className="faint" style={{ fontSize: "0.8rem" }}>Consultando...</span> : null}
+                    </div>
+                    {!form.data ? (
+                      <p className="muted" style={{ fontSize: "0.88rem" }}>Selecione a data para ver os horários.</p>
+                    ) : horarios.length === 0 ? (
+                      <p className="muted" style={{ fontSize: "0.88rem" }}>Nenhum horário disponível para os filtros selecionados.</p>
+                    ) : (
+                      <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: "10px" }}>
+                        {horarios.map((horario) => {
+                          const ativo = form.data_hora_inicio === horario;
+                          return (
+                            <button
+                              key={horario}
+                              type="button"
+                              onClick={() => atualizarCampo("data_hora_inicio", horario)}
+                              className={ativo ? "btn btn--primary" : "btn btn--ghost"}
+                            >
+                              {formatarHorario(horario)}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
 
-							{error ? <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
-							{success ? <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{success}</div> : null}
+                  {error ? <div className="alert alert--error">{error}</div> : null}
+                  {success ? <div className="alert alert--success">{success}</div> : null}
 
-							<button
-								type="submit"
-								disabled={submitting}
-								className="w-full rounded-xl bg-slate-900 px-4 py-4 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-							>
-								{submitting ? "Confirmando agendamento..." : "Confirmar agendamento"}
-							</button>
-						</form>
-					)}
-				</section>
+                  <button type="submit" className="btn btn--primary btn--block" disabled={submitting}>
+                    {submitting ? "Confirmando..." : "Confirmar agendamento"}
+                  </button>
+                </form>
+              </>
+            )}
+          </section>
 
-				<aside className="space-y-6">
-					<section className="rounded-2xl bg-white/10 p-6 shadow-xl backdrop-blur-sm">
-						<h2 className="text-xl font-bold">Resumo</h2>
-						<div className="mt-5 space-y-4 text-sm text-slate-200">
-							<div>
-								<p className="text-slate-400">Barbeiro</p>
-								<p className="mt-1 font-semibold text-white">{barbeiroSelecionado?.nome || "Nenhum selecionado"}</p>
-							</div>
-							<div>
-								<p className="text-slate-400">Data</p>
-								<p className="mt-1 font-semibold text-white">{form.data || "Nenhuma selecionada"}</p>
-							</div>
-							<div>
-								<p className="text-slate-400">Horário</p>
-								<p className="mt-1 font-semibold text-white">
-									{form.data_hora_inicio ? formatarHorario(form.data_hora_inicio) : "Nenhum selecionado"}
-								</p>
-							</div>
-							<div>
-								<p className="text-slate-400">Duração do slot</p>
-								<p className="mt-1 font-semibold text-white">60 minutos</p>
-							</div>
-							<div>
-								<p className="text-slate-400">Valor estimado</p>
-								<p className="mt-1 text-2xl font-bold text-white">{formatarMoeda(valorTotal)}</p>
-							</div>
-						</div>
-					</section>
+          <aside className="stack stack-5">
+            <section className="card">
+              <div className="section-label">Resumo</div>
+              <div className="stack stack-4 mt-4">
+                <div>
+                  <p className="faint" style={{ fontSize: "0.78rem" }}>Barbearia</p>
+                  <p className="mt-2" style={{ fontWeight: 600 }}>{barbeariaSelecionada?.nome_comercial || "—"}</p>
+                </div>
+                <div>
+                  <p className="faint" style={{ fontSize: "0.78rem" }}>Barbeiro</p>
+                  <p className="mt-2" style={{ fontWeight: 600 }}>{barbeiroSelecionado?.nome || "—"}</p>
+                </div>
+                <div>
+                  <p className="faint" style={{ fontSize: "0.78rem" }}>Data</p>
+                  <p className="mt-2" style={{ fontWeight: 600 }}>{form.data || "—"}</p>
+                </div>
+                <div>
+                  <p className="faint" style={{ fontSize: "0.78rem" }}>Horário</p>
+                  <p className="mt-2" style={{ fontWeight: 600 }}>
+                    {form.data_hora_inicio ? formatarHorario(form.data_hora_inicio) : "—"}
+                  </p>
+                </div>
+                <div style={{ borderTop: "1px solid var(--line)", paddingTop: "16px" }}>
+                  <p className="faint" style={{ fontSize: "0.78rem" }}>Valor estimado</p>
+                  <p className="gold mt-2" style={{ fontWeight: 700, fontSize: "1.6rem" }}>{formatarMoeda(valorTotal)}</p>
+                </div>
+              </div>
+            </section>
 
-					<section className="rounded-2xl bg-white p-6 text-slate-900 shadow-xl">
-						<h2 className="text-xl font-bold">Regras da agenda</h2>
-						<ul className="mt-4 space-y-3 text-sm text-slate-600">
-							<li>Os horários mostrados já respeitam funcionamento da barbearia.</li>
-							<li>Os horários também respeitam a disponibilidade configurada para o barbeiro.</li>
-							<li>Cada reserva ocupa um bloco fixo de 60 minutos.</li>
-							<li>Não é possível reservar um horário que já tenha conflito para o mesmo barbeiro.</li>
-						</ul>
-					</section>
-				</aside>
-			</main>
-		</div>
-	);
+            <section className="card">
+              <div className="section-label">Como funciona</div>
+              <ul className="muted mt-4" style={{ paddingLeft: "18px", fontSize: "0.86rem", lineHeight: 1.7 }}>
+                <li>Os horários respeitam o funcionamento da barbearia.</li>
+                <li>E também a disponibilidade do barbeiro.</li>
+                <li>Cada reserva ocupa um bloco fixo de 60 minutos.</li>
+                <li>Horários já ocupados não aparecem na lista.</li>
+              </ul>
+            </section>
+          </aside>
+        </div>
+      </main>
+    </div>
+  );
 }

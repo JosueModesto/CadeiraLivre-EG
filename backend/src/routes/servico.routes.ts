@@ -13,8 +13,8 @@ router.get("/", (req, res) => servicoController.getAll(req, res));
 
 router.get("/:id", (req, res) => servicoController.getById(req, res));
 
-router.put("/:id", (req, res) => servicoController.update(req, res));
+router.put("/:id", authenticateToken, (req, res) => servicoController.update(req as any, res));
 
-router.delete("/:id", (req, res) => servicoController.delete(req, res));
+router.delete("/:id", authenticateToken, requireAdmin, (req, res) => servicoController.delete(req, res));
 
 export default router;

@@ -9,7 +9,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "chave_secreta_barbearia_123";
 export class AuthController {
   async register(req: Request, res: Response): Promise<Response> {
     try {
-      const { nome, email, senha, telefone, tipo_usuario, cidade_id } = req.body;
+      const { nome, email, senha, telefone, endereco, tipo_usuario, cidade_id } = req.body;
 
       if (!nome || !email || !senha || !telefone || !tipo_usuario) {
         return res.status(400).json({
@@ -49,6 +49,7 @@ export class AuthController {
         email,
         senha: senhaHash,
         telefone,
+        endereco: endereco || null,
         tipo_usuario,
         cidade_id: cidade_id || null,
       });
@@ -60,7 +61,9 @@ export class AuthController {
         nome: usuarioSalvo.nome,
         email: usuarioSalvo.email,
         telefone: usuarioSalvo.telefone,
+        endereco: usuarioSalvo.endereco,
         tipo_usuario: usuarioSalvo.tipo_usuario,
+        cidade_id: usuarioSalvo.cidade_id,
         criado_em: usuarioSalvo.criado_em,
       });
     } catch (error: any) {
@@ -120,7 +123,10 @@ export class AuthController {
           id: usuario.id,
           nome: usuario.nome,
           email: usuario.email,
+          telefone: usuario.telefone,
+          endereco: usuario.endereco,
           tipo_usuario: usuario.tipo_usuario,
+          cidade_id: usuario.cidade_id,
         },
       });
     } catch (error: any) {

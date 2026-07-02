@@ -208,36 +208,20 @@ async function runSeed(force = false) {
     }
   }
 
-  const servicoCorte = await upsertOne(
-    servicoRepository,
-    { barbearia_id: barbearia.id, nome_servico: "Corte de Cabelo" },
-    {
-      barbearia_id: barbearia.id,
-      nome_servico: "Corte de Cabelo",
-      preco: "45.00",
-      duracao_min: 30,
-    }
-  );
-
-  const servicoBarba = await upsertOne(
-    servicoRepository,
-    { barbearia_id: barbearia.id, nome_servico: "Barba" },
-    {
-      barbearia_id: barbearia.id,
-      nome_servico: "Barba",
-      preco: "30.00",
-      duracao_min: 20,
-    }
-  );
-
-  const servicosExtras = [
+  const catalogoServicosSeed = [
+    { nome_servico: "Corte de Cabelo", preco: "45.00", duracao_min: 35 },
+    { nome_servico: "Barba", preco: "30.00", duracao_min: 15 },
+    { nome_servico: "Sobrancelha", preco: "20.00", duracao_min: 10 },
     { nome_servico: "Corte + Barba", preco: "70.00", duracao_min: 50 },
-    { nome_servico: "Hidratação Capilar", preco: "35.00", duracao_min: 25 },
-    { nome_servico: "Limpeza de Ouvido/Nariz", preco: "20.00", duracao_min: 10 },
-    { nome_servico: "Tingimento de Barba", preco: "40.00", duracao_min: 30 },
+    { nome_servico: "Corte + Sobrancelha", preco: "55.00", duracao_min: 45 },
+    { nome_servico: "Corte + Barba + Sobrancelha", preco: "85.00", duracao_min: 60 },
   ];
 
-  for (const servico of servicosExtras) {
+  const servicosBarbeariaCentral = catalogoServicosSeed.filter((servico) =>
+    ["Corte de Cabelo", "Barba", "Sobrancelha", "Corte + Barba"].includes(servico.nome_servico)
+  );
+
+  for (const servico of servicosBarbeariaCentral) {
     await upsertOne(
       servicoRepository,
       { barbearia_id: barbearia.id, nome_servico: servico.nome_servico },
@@ -249,6 +233,26 @@ async function runSeed(force = false) {
       }
     );
   }
+
+  await servicoRepository
+    .createQueryBuilder()
+    .delete()
+    .from(BarbeariaServico)
+    .where("barbearia_id = :barbearia_id", { barbearia_id: barbearia.id })
+    .andWhere("nome_servico NOT IN (:...nomesPermitidos)", {
+      nomesPermitidos: servicosBarbeariaCentral.map((servico) => servico.nome_servico),
+    })
+    .execute();
+
+  const servicoCorte = await servicoRepository.findOneByOrFail({
+    barbearia_id: barbearia.id,
+    nome_servico: "Corte de Cabelo",
+  });
+
+  const servicoBarba = await servicoRepository.findOneByOrFail({
+    barbearia_id: barbearia.id,
+    nome_servico: "Barba",
+  });
 
   const inicio = new Date("2030-01-15T10:00:00.000Z");
 
