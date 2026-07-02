@@ -4,6 +4,7 @@ import { Barbearia } from "../entities/Barbearia";
 import { Barbeiro } from "../entities/Barbeiro";
 import { BarbeiroDisponibilidade } from "../entities/BarbeiroDisponibilidade";
 import { AuthRequest } from "../middlewares/auth.middleware";
+import { nomeSemNumerosESimbolos, telefoneSomenteNumeros } from "../utils/validation";
 
 const db = DatabaseSingleton.getInstance();
 
@@ -175,12 +176,20 @@ export class BarbeiroController {
 			});
 		}
 
+		if (!nomeSemNumerosESimbolos(nome)) {
+			return res.status(400).json({ message: "Nome deve conter apenas letras e espaços" });
+		}
+
+		if (!telefoneSomenteNumeros(telefone)) {
+			return res.status(400).json({ message: "Telefone deve conter apenas números" });
+		}
+
 		try {
 			const barbeiroRepository = db.getRepository(Barbeiro);
 			const novoBarbeiro = barbeiroRepository.create({
 				barbearia_id,
-				nome,
-				telefone,
+				nome: String(nome).trim(),
+				telefone: String(telefone).trim(),
 				ativo: ativo ?? true,
 			});
 
@@ -271,9 +280,17 @@ export class BarbeiroController {
 				});
 			}
 
+			if (nome !== undefined && !nomeSemNumerosESimbolos(nome)) {
+				return res.status(400).json({ message: "Nome deve conter apenas letras e espaços" });
+			}
+
+			if (telefone !== undefined && !telefoneSomenteNumeros(telefone)) {
+				return res.status(400).json({ message: "Telefone deve conter apenas números" });
+			}
+
 			if (barbearia_id !== undefined) barbeiro.barbearia_id = barbearia_id;
-			if (nome) barbeiro.nome = nome;
-			if (telefone) barbeiro.telefone = telefone;
+			if (nome) barbeiro.nome = String(nome).trim();
+			if (telefone) barbeiro.telefone = String(telefone).trim();
 			if (ativo !== undefined) barbeiro.ativo = ativo;
 
 			const barbeiroAtualizado = await barbeiroRepository.save(barbeiro);

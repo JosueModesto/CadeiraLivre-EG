@@ -8,11 +8,28 @@ import { servicoService } from "../services/servicoService";
 import Navbar from "../components/Navbar";
 
 function formatarHorario(valor) {
-  return new Intl.DateTimeFormat("pt-BR", { timeStyle: "short" }).format(new Date(valor));
+  // Slots são enviados pela API em ISO e representam o horário de agenda; exibir em UTC evita deslocamento visual por fuso do navegador.
+  return new Intl.DateTimeFormat("pt-BR", { timeStyle: "short", timeZone: "UTC" }).format(new Date(valor));
 }
 
 function formatarMoeda(valor) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(valor || 0));
+}
+
+function filtrarHorariosPassados(horarios, dataSelecionada) {
+  const agora = new Date();
+  const hoje = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, "0")}-${String(agora.getDate()).padStart(2, "0")}`;
+
+  if (dataSelecionada !== hoje) {
+    return horarios;
+  }
+
+  const agoraMin = agora.getHours() * 60 + agora.getMinutes();
+  return horarios.filter((valor) => {
+    const slot = new Date(valor);
+    const slotMin = slot.getUTCHours() * 60 + slot.getUTCMinutes();
+    return slotMin > agoraMin;
+  });
 }
 
 export default function NovoAgendamento() {
@@ -86,10 +103,12 @@ export default function NovoAgendamento() {
           data: form.data,
         });
 
-        setHorarios(response.horarios || []);
+        const horariosFiltrados = filtrarHorariosPassados(response.horarios || [], form.data);
+
+        setHorarios(horariosFiltrados);
         setForm((current) => ({
           ...current,
-          data_hora_inicio: (response.horarios || []).includes(current.data_hora_inicio)
+          data_hora_inicio: horariosFiltrados.includes(current.data_hora_inicio)
             ? current.data_hora_inicio
             : "",
         }));

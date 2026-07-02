@@ -85,14 +85,19 @@ export class AgendamentoService {
       order: { hora_inicio: "ASC" },
     });
 
-    const temRestricaoAtiva = disponibilidades.some((d) => d.esta_disponivel && d.hora_inicio && d.hora_fim);
-    if (!temRestricaoAtiva) {
+    // Sem configuração do barbeiro para o dia: usa funcionamento da barbearia.
+    if (disponibilidades.length === 0) {
       return janelasBarbearia;
     }
 
     const janelasBarbeiro = disponibilidades
       .filter((d) => d.esta_disponivel && d.hora_inicio && d.hora_fim)
       .map((d) => ({ hora_abertura: d.hora_inicio!, hora_fechamento: d.hora_fim! }));
+
+    // Com configuração explícita e sem janela ativa: dia indisponível para o barbeiro.
+    if (janelasBarbeiro.length === 0) {
+      return [];
+    }
 
     return this.intersectarJanelas(janelasBarbearia, janelasBarbeiro);
   }
