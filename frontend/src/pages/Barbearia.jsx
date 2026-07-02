@@ -32,6 +32,10 @@ function funcionamentoInicial() {
   }));
 }
 
+function formatarMoeda(valor) {
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(valor || 0));
+}
+
 function EstadoCentral({ titulo, descricao, onVoltar }) {
   return (
     <div className="app-shell">
@@ -64,8 +68,14 @@ export default function Barbearia() {
   const [barbeiroSelecionadoId, setBarbeiroSelecionadoId] = useState("");
   const [disponibilidade, setDisponibilidade] = useState(disponibilidadeInicial());
   const [novoBarbeiro, setNovoBarbeiro] = useState({ nome: "", telefone: "", ativo: true });
-  const [servicos, setServicos] = useState([]);
-  const [savingPrecoServicoId, setSavingPrecoServicoId] = useState(null);
+  const [catalogoServicos, setCatalogoServicos] = useState([]);
+  const [servicosBarbearia, setServicosBarbearia] = useState([]);
+  const [novoServicoBaseId, setNovoServicoBaseId] = useState("");
+  const [novoServicoPreco, setNovoServicoPreco] = useState("");
+  const [adicionandoServico, setAdicionandoServico] = useState(false);
+  const [salvandoPrecoServicoId, setSalvandoPrecoServicoId] = useState(null);
+  const [removendoServicoId, setRemovendoServicoId] = useState(null);
+  const [mostrarAdicionarServico, setMostrarAdicionarServico] = useState(false);
 
   useEffect(() => {
     async function carregar() {
@@ -80,13 +90,15 @@ export default function Barbearia() {
         }
         setBarbearia(encontrada);
 
-        const [configResponse, barbeirosResponse, servicosResponse] = await Promise.all([
+        const [configResponse, barbeirosResponse, catalogoResponse, servicosResponse] = await Promise.all([
           barbeariaService.getAgendamentoConfig(encontrada.id),
           barbeiroService.getAll({ barbearia_id: encontrada.id }),
+          servicoService.getAll({ global: true }),
           servicoService.getAll({ barbearia_id: encontrada.id }),
         ]);
 
-        setServicos(servicosResponse.servicos || []);
+        setCatalogoServicos(catalogoResponse.servicos || []);
+        setServicosBarbearia(servicosResponse.servicos || []);
 
         const mapaFuncionamento = new Map((configResponse.funcionamento || []).map((item) => [item.dia_semana, item]));
         setFuncionamento(
@@ -176,6 +188,10 @@ export default function Barbearia() {
       [diaSemana]: current[diaSemana].filter((_, i) => i !== index),
     }));
   }
+
+  const catalogoDisponivel = catalogoServicos.filter(
+    (servico) => !servicosBarbearia.some((item) => item.nome_servico === servico.nome_servico)
+  );
 
   async function salvarFuncionamento() {
     if (!barbearia) return;
@@ -276,23 +292,79 @@ export default function Barbearia() {
     }
   }
 
+  async function adicionarServicoDaBarbearia(event) {
+    event.preventDefault();
+
+    if (!barbearia || !novoServicoBaseId || !novoServicoPreco) {
+      setError("Selecione um serviço do catálogo e informe o preço.");
+      return;
+    }
+
+    const preco = Number(novoServicoPreco);
+    if (Number.isNaN(preco) || preco <= 0) {
+      setError("Informe um preço válido.");
+      return;
+    }
+
+    setAdicionandoServico(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await servicoService.create({
+        servico_id: Number(novoServicoBaseId),
+        barbearia_id: barbearia.id,
+        preco: preco.toFixed(2),
+      });
+
+      if (response.servico) {
+        setServicosBarbearia((current) => [...current, response.servico]);
+      }
+
+      setNovoServicoBaseId("");
+      setNovoServicoPreco("");
+      setSuccess("Serviço adicionado à sua barbearia.");
+    } catch (err) {
+      setError(err.response?.data?.message || "Erro ao adicionar serviço à barbearia.");
+    } finally {
+      setAdicionandoServico(false);
+    }
+  }
+
   async function salvarPrecoServico(servico, novoPreco) {
     if (!novoPreco || Number(novoPreco) <= 0) {
       setError("Informe um preço válido para o serviço.");
       return;
     }
 
-    setSavingPrecoServicoId(servico.id);
+    setSalvandoPrecoServicoId(servico.id);
     setError("");
     setSuccess("");
     try {
       const response = await servicoService.update(servico.id, { preco: Number(novoPreco).toFixed(2) });
-      setServicos((current) => current.map((item) => (item.id === servico.id ? response.servico : item)));
+      setServicosBarbearia((current) => current.map((item) => (item.id === servico.id ? response.servico : item)));
       setSuccess("Preço atualizado com sucesso.");
     } catch (err) {
       setError(err.response?.data?.message || "Erro ao atualizar preço do serviço.");
     } finally {
-      setSavingPrecoServicoId(null);
+      setSalvandoPrecoServicoId(null);
+    }
+  }
+
+  async function removerServicoDaBarbearia(servico) {
+    if (!window.confirm(`Deseja remover o serviço ${servico.nome_servico} da sua barbearia?`)) return;
+
+    setRemovendoServicoId(servico.id);
+    setError("");
+    setSuccess("");
+    try {
+      await servicoService.remove(servico.id);
+      setServicosBarbearia((current) => current.filter((item) => item.id !== servico.id));
+      setSuccess("Serviço removido da barbearia.");
+    } catch (err) {
+      setError(err.response?.data?.message || "Erro ao remover serviço da barbearia.");
+    } finally {
+      setRemovendoServicoId(null);
     }
   }
 
@@ -563,19 +635,57 @@ export default function Barbearia() {
             </div>
 
             <div className="card">
-              <h2 className="card-title">Serviços e preços</h2>
-              <p className="card-sub">Ajuste o preço dos serviços.</p>
+              <div className="between wrap">
+                <div>
+                  <h2 className="card-title">Serviços da minha barbearia</h2>
+                  <p className="card-sub">Ajuste o preço dos serviços que você oferece ou remova da sua loja.</p>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--sm"
+                  onClick={() => setMostrarAdicionarServico((current) => !current)}
+                  disabled={catalogoDisponivel.length === 0}
+                >
+                  {mostrarAdicionarServico ? "Fechar" : "+ Adicionar serviço"}
+                </button>
+              </div>
+
+              {mostrarAdicionarServico ? (
+                <form onSubmit={adicionarServicoDaBarbearia} className="grid mt-6" style={{ gridTemplateColumns: "1.4fr 1fr auto", gap: "10px" }}>
+                  <select value={novoServicoBaseId} onChange={(e) => setNovoServicoBaseId(e.target.value)}>
+                    <option value="">Selecione um serviço</option>
+                    {catalogoDisponivel.map((servico) => (
+                      <option key={servico.id} value={servico.id}>
+                        {servico.nome_servico} - {servico.duracao_min} min - {formatarMoeda(servico.preco)}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={novoServicoPreco}
+                    onChange={(e) => setNovoServicoPreco(e.target.value)}
+                    placeholder="Preço na sua loja"
+                  />
+                  <button type="submit" className="btn btn--primary" disabled={adicionandoServico || catalogoDisponivel.length === 0}>
+                    {adicionandoServico ? "Adicionando..." : "Adicionar"}
+                  </button>
+                </form>
+              ) : null}
 
               <div className="stack stack-4 mt-6">
-                {servicos.length === 0 ? (
-                  <p className="muted" style={{ fontSize: "0.88rem" }}>Nenhum serviço vinculado a esta barbearia.</p>
+                {servicosBarbearia.length === 0 ? (
+                  <p className="muted" style={{ fontSize: "0.88rem" }}>Nenhum serviço adicionado à sua barbearia ainda.</p>
                 ) : (
-                  servicos.map((servico) => (
-                    <ServicoItem
+                  servicosBarbearia.map((servico) => (
+                    <ServicoBarbeariaCard
                       key={servico.id}
                       servico={servico}
-                      salvando={savingPrecoServicoId === servico.id}
+                      salvando={salvandoPrecoServicoId === servico.id}
+                      removendo={removendoServicoId === servico.id}
                       onSalvarPreco={(preco) => salvarPrecoServico(servico, preco)}
+                      onRemover={() => removerServicoDaBarbearia(servico)}
                     />
                   ))
                 )}
@@ -588,36 +698,34 @@ export default function Barbearia() {
   );
 }
 
-function ServicoItem({ servico, onSalvarPreco, salvando }) {
-  const [preco, setPreco] = useState(String(servico.preco));
+function ServicoBarbeariaCard({ servico, onSalvarPreco, onRemover, salvando, removendo }) {
+  const [preco, setPreco] = useState(String(servico.preco ?? ""));
   const alterado = Number(preco) !== Number(servico.preco);
 
   useEffect(() => {
-    setPreco(String(servico.preco));
+    setPreco(String(servico.preco ?? ""));
   }, [servico.preco]);
 
   return (
-    <div
-      className="card between wrap"
-      style={{ padding: "14px 16px", boxShadow: "none", background: "var(--wood-700)", gap: "12px" }}
-    >
-      <div>
-        <p style={{ fontWeight: 600 }}>{servico.nome_servico}</p>
-        <p className="faint" style={{ fontSize: "0.8rem" }}>{servico.duracao_min} min</p>
+    <div className="card" style={{ padding: "14px 16px", boxShadow: "none", background: "var(--wood-700)" }}>
+      <div className="between wrap">
+        <div>
+          <p style={{ fontWeight: 600 }}>{servico.nome_servico}</p>
+          <p className="faint" style={{ fontSize: "0.8rem" }}>{servico.duracao_min} min</p>
+        </div>
+        <span className="badge badge--gold">Preço da sua loja</span>
       </div>
-      <div className="row" style={{ gap: "8px" }}>
-        <div className="field" style={{ width: "120px" }}>
-          <label style={{ fontSize: "0.66rem" }}>Preço (R$)</label>
+
+      <div className="row mt-4" style={{ gap: "8px", justifyContent: "flex-end" }}>
+        <div className="field" style={{ width: "140px" }}>
+          <label style={{ fontSize: "0.66rem" }}>Preço</label>
           <input type="number" min="0" step="0.01" value={preco} onChange={(e) => setPreco(e.target.value)} />
         </div>
-        <button
-          type="button"
-          className="btn btn--ghost btn--sm"
-          disabled={!alterado || salvando}
-          onClick={() => onSalvarPreco(preco)}
-          style={{ alignSelf: "end" }}
-        >
+        <button type="button" className="btn btn--ghost btn--sm" disabled={!alterado || salvando} onClick={() => onSalvarPreco(preco)}>
           {salvando ? "Salvando..." : "Salvar"}
+        </button>
+        <button type="button" className="btn btn--danger btn--sm" onClick={onRemover} disabled={removendo}>
+          {removendo ? "Removendo..." : "Remover"}
         </button>
       </div>
     </div>

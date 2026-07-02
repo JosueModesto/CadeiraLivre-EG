@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
+import AdminDashboard from "./AdminDashboard";
 import { usuarioService } from "../services/usuarioService";
 import { barbeariaService } from "../services/barbeariaService";
 import { cidadeService } from "../services/cidadeService";
@@ -15,7 +16,7 @@ function Tile({ title, description, onClick }) {
   );
 }
 
-export default function Dashboard() {
+function UserDashboard() {
   const navigate = useNavigate();
   const { user, updateCurrentUser } = useAuth();
   const isBarbearia = user?.tipo_usuario === "barbearia";
@@ -309,4 +310,14 @@ function InfoItem({ label, value }) {
       <p className="mt-2">{value}</p>
     </div>
   );
+}
+
+export default function Dashboard() {
+  const { user } = useAuth();
+
+  if (user?.tipo_usuario === "administrador") {
+    return <AdminDashboard />;
+  }
+
+  return <UserDashboard />;
 }
