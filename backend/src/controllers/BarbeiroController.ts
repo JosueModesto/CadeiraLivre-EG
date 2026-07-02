@@ -1,9 +1,11 @@
 import { Request, Response } from "express";
-import { AppDataSource } from "../data-source";
+import { DatabaseSingleton } from "../padrao/singleton";
 import { Barbearia } from "../entities/Barbearia";
 import { Barbeiro } from "../entities/Barbeiro";
 import { BarbeiroDisponibilidade } from "../entities/BarbeiroDisponibilidade";
 import { AuthRequest } from "../middlewares/auth.middleware";
+
+const db = DatabaseSingleton.getInstance();
 
 export class BarbeiroController {
 	private validarHorario(horario?: string): boolean {
@@ -24,7 +26,7 @@ export class BarbeiroController {
 	async getDisponibilidade(req: Request, res: Response): Promise<Response> {
 		try {
 			const barbeiroId = Number(req.params.id);
-			const disponibilidadeRepository = AppDataSource.getRepository(BarbeiroDisponibilidade);
+			const disponibilidadeRepository = db.getRepository(BarbeiroDisponibilidade);
 
 			const disponibilidades = await disponibilidadeRepository.find({
 				where: { barbeiro_id: barbeiroId },
@@ -48,9 +50,9 @@ export class BarbeiroController {
 				return res.status(401).json({ message: "Usuário não autenticado" });
 			}
 
-			const barbeiroRepository = AppDataSource.getRepository(Barbeiro);
-			const barbeariaRepository = AppDataSource.getRepository(Barbearia);
-			const disponibilidadeRepository = AppDataSource.getRepository(BarbeiroDisponibilidade);
+			const barbeiroRepository = db.getRepository(Barbeiro);
+			const barbeariaRepository = db.getRepository(Barbearia);
+			const disponibilidadeRepository = db.getRepository(BarbeiroDisponibilidade);
 
 			const barbeiro = await barbeiroRepository.findOne({ where: { id: barbeiroId } });
 			if (!barbeiro) {
@@ -174,7 +176,7 @@ export class BarbeiroController {
 		}
 
 		try {
-			const barbeiroRepository = AppDataSource.getRepository(Barbeiro);
+			const barbeiroRepository = db.getRepository(Barbeiro);
 			const novoBarbeiro = barbeiroRepository.create({
 				barbearia_id,
 				nome,
@@ -199,7 +201,7 @@ export class BarbeiroController {
 	async getAll(req: Request, res: Response): Promise<Response> {
 		try {
 			const { barbearia_id } = req.query;
-			const barbeiroRepository = AppDataSource.getRepository(Barbeiro);
+			const barbeiroRepository = db.getRepository(Barbeiro);
 			
 			let query = barbeiroRepository.createQueryBuilder("barbeiro");
 			
@@ -232,7 +234,7 @@ export class BarbeiroController {
 		try {
 			const { id } = req.params;
 
-			const barbeiroRepository = AppDataSource.getRepository(Barbeiro);
+			const barbeiroRepository = db.getRepository(Barbeiro);
 			const barbeiro = await barbeiroRepository.findOne({
 				where: { id: Number(id) },
 				select: ["id", "barbearia_id", "nome", "telefone", "ativo"],
@@ -258,7 +260,7 @@ export class BarbeiroController {
 			const { id } = req.params;
 			const { barbearia_id, nome, telefone, ativo } = req.body;
 
-			const barbeiroRepository = AppDataSource.getRepository(Barbeiro);
+			const barbeiroRepository = db.getRepository(Barbeiro);
 			const barbeiro = await barbeiroRepository.findOne({
 				where: { id: Number(id) },
 			});
@@ -292,7 +294,7 @@ export class BarbeiroController {
 		try {
 			const { id } = req.params;
 
-			const barbeiroRepository = AppDataSource.getRepository(Barbeiro);
+			const barbeiroRepository = db.getRepository(Barbeiro);
 			const barbeiro = await barbeiroRepository.findOne({
 				where: { id: Number(id) },
 			});
@@ -316,4 +318,5 @@ export class BarbeiroController {
 		}
 	}
 }
+
 

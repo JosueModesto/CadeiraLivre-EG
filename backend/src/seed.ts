@@ -1,5 +1,5 @@
 import { pathToFileURL } from "url";
-import { AppDataSource } from "./data-source";
+import { DatabaseSingleton } from "./padrao/singleton";
 import { Cidade } from "./entities/Cidade";
 import { Usuario, TipoUsuario } from "./entities/Usuario";
 import { Barbearia } from "./entities/Barbearia";
@@ -9,6 +9,8 @@ import { BarbeiroDisponibilidade } from "./entities/BarbeiroDisponibilidade";
 import { BarbeariaServico } from "./entities/BarbeariaServico";
 import { Agendamento, StatusAgendamento } from "./entities/Agendamento";
 import { AgendamentoItem } from "./entities/AgendamentoItem";
+
+const db = DatabaseSingleton.getInstance();
 
 async function upsertOne(repository: any, where: any, payload: any) {
   const existing = await repository.findOneBy(where);
@@ -28,15 +30,15 @@ async function runSeed(force = false) {
     return;
   }
 
-  const cidadeRepository = AppDataSource.getRepository(Cidade);
-  const usuarioRepository = AppDataSource.getRepository(Usuario);
-  const barbeariaRepository = AppDataSource.getRepository(Barbearia);
-  const funcionamentoRepository = AppDataSource.getRepository(BarbeariaFuncionamento);
-  const barbeiroRepository = AppDataSource.getRepository(Barbeiro);
-  const barbeiroDisponibilidadeRepository = AppDataSource.getRepository(BarbeiroDisponibilidade);
-  const servicoRepository = AppDataSource.getRepository(BarbeariaServico);
-  const agendamentoRepository = AppDataSource.getRepository(Agendamento);
-  const agendamentoItemRepository = AppDataSource.getRepository(AgendamentoItem);
+  const cidadeRepository = db.getRepository(Cidade);
+  const usuarioRepository = db.getRepository(Usuario);
+  const barbeariaRepository = db.getRepository(Barbearia);
+  const funcionamentoRepository = db.getRepository(BarbeariaFuncionamento);
+  const barbeiroRepository = db.getRepository(Barbeiro);
+  const barbeiroDisponibilidadeRepository = db.getRepository(BarbeiroDisponibilidade);
+  const servicoRepository = db.getRepository(BarbeariaServico);
+  const agendamentoRepository = db.getRepository(Agendamento);
+  const agendamentoItemRepository = db.getRepository(AgendamentoItem);
 
   const cidadePrincipal = await upsertOne(
     cidadeRepository,
@@ -303,19 +305,19 @@ export { runSeed };
 
 async function runSeedFromCli() {
   try {
-    if (!AppDataSource.isInitialized) {
-      await AppDataSource.initialize();
+    if (!db.isInitialized) {
+      await db.initialize();
     }
 
     await runSeed(true);
-    console.log("✓ Seed executado com sucesso");
+    console.log("S Seed executado com sucesso");
   } catch (error) {
     const err = error as Error;
-    console.error(`✗ Erro ao executar seed manualmente: ${err.message}`);
+    console.error(`S Erro ao executar seed manualmente: ${err.message}`);
     process.exitCode = 1;
   } finally {
-    if (AppDataSource.isInitialized) {
-      await AppDataSource.destroy();
+    if (db.isInitialized) {
+      await db.destroy();
     }
   }
 }
@@ -323,3 +325,4 @@ async function runSeedFromCli() {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   runSeedFromCli();
 }
+

@@ -5,7 +5,7 @@ import { authenticateToken } from "../middlewares/auth.middleware";
 const router = Router();
 const agendamentoController = new AgendamentoClienteController();
 
-// Criar novo agendamento (requer autenticação)
+// Criar novo agendamento 
 router.post("/", authenticateToken, (req, res) =>
   agendamentoController.create(req, res)
 );
@@ -20,12 +20,12 @@ router.get("/available-slots", (req, res) =>
   agendamentoController.getAvailableSlots(req, res)
 );
 
-// Listar agendamentos do usuário (requer autenticação)
+// Listar agendamentos do usuário 
 router.get("/my-appointments", authenticateToken, (req, res) =>
   agendamentoController.getMyAppointments(req, res)
 );
 
-// Cancelar agendamento do usuário (requer autenticação)
+// Cancelar agendamento do usuário 
 router.patch("/:id/cancel", authenticateToken, (req, res) =>
   agendamentoController.cancel(req, res)
 );

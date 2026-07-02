@@ -1,5 +1,5 @@
 import { Between, In, Repository } from "typeorm";
-import { AppDataSource } from "../data-source";
+import { DatabaseSingleton } from "../padrao/singleton";
 import { Agendamento, StatusAgendamento } from "../entities/Agendamento";
 import { AgendamentoItem } from "../entities/AgendamentoItem";
 import { Barbearia } from "../entities/Barbearia";
@@ -12,6 +12,8 @@ import {
   Janela,
 } from "./AgendamentoDisponibilidadeService";
 
+const db = DatabaseSingleton.getInstance();
+
 export interface CriarAgendamentoInput {
   cliente_id: number;
   barbearia_id: number;
@@ -23,13 +25,13 @@ export interface CriarAgendamentoInput {
 export class AgendamentoService {
   constructor(
     private readonly disponibilidade: AgendamentoDisponibilidadeService = new AgendamentoDisponibilidadeService(),
-    private readonly agendamentoRepo: Repository<Agendamento> = AppDataSource.getRepository(Agendamento),
-    private readonly agendamentoItemRepo: Repository<AgendamentoItem> = AppDataSource.getRepository(AgendamentoItem),
-    private readonly barbeariaRepo: Repository<Barbearia> = AppDataSource.getRepository(Barbearia),
-    private readonly funcionamentoRepo: Repository<BarbeariaFuncionamento> = AppDataSource.getRepository(BarbeariaFuncionamento),
-    private readonly servicoRepo: Repository<BarbeariaServico> = AppDataSource.getRepository(BarbeariaServico),
-    private readonly barbeiroRepo: Repository<Barbeiro> = AppDataSource.getRepository(Barbeiro),
-    private readonly barbeiroDisponibilidadeRepo: Repository<BarbeiroDisponibilidade> = AppDataSource.getRepository(BarbeiroDisponibilidade)
+    private readonly agendamentoRepo: Repository<Agendamento> = db.getRepository(Agendamento),
+    private readonly agendamentoItemRepo: Repository<AgendamentoItem> = db.getRepository(AgendamentoItem),
+    private readonly barbeariaRepo: Repository<Barbearia> = db.getRepository(Barbearia),
+    private readonly funcionamentoRepo: Repository<BarbeariaFuncionamento> = db.getRepository(BarbeariaFuncionamento),
+    private readonly servicoRepo: Repository<BarbeariaServico> = db.getRepository(BarbeariaServico),
+    private readonly barbeiroRepo: Repository<Barbeiro> = db.getRepository(Barbeiro),
+    private readonly barbeiroDisponibilidadeRepo: Repository<BarbeiroDisponibilidade> = db.getRepository(BarbeiroDisponibilidade)
   ) {}
 
   private obterMinutos(hora: string): number {

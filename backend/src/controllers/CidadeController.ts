@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
-import { AppDataSource } from "../data-source";
+import { DatabaseSingleton } from "../padrao/singleton";
 import { Cidade } from "../entities/Cidade";
+
+const db = DatabaseSingleton.getInstance();
 
 
 export class CidadeController{
@@ -14,7 +16,7 @@ export class CidadeController{
         }
 
         try {
-            const cidadeRepository = AppDataSource.getRepository(Cidade);
+            const cidadeRepository = db.getRepository(Cidade);
             const novaCidade = cidadeRepository.create({
                 nome, 
                 estado: estado.toUpperCase()
@@ -35,7 +37,7 @@ export class CidadeController{
 
     async getAll(req: Request, res: Response): Promise<Response> {
         try {
-        const cidadeRepository = AppDataSource.getRepository(Cidade);
+        const cidadeRepository = db.getRepository(Cidade);
         const cidades = await cidadeRepository.find({
             select: ["id", "nome", "estado"],
         });
@@ -56,7 +58,7 @@ async getById(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
 
-      const cidadeRepository = AppDataSource.getRepository(Cidade);
+      const cidadeRepository = db.getRepository(Cidade);
       const cidade = await cidadeRepository.findOne({
         where: { id: Number(id) },
         select: {
@@ -94,7 +96,7 @@ async getById(req: Request, res: Response): Promise<Response> {
             const { id } = req.params;
             const { nome, estado } = req.body;
 
-            const cidadeRepository = AppDataSource.getRepository(Cidade);
+            const cidadeRepository = db.getRepository(Cidade);
             const cidade = await cidadeRepository.findOne({
                 where: { id: Number(id) },
             });
@@ -126,7 +128,7 @@ async getById(req: Request, res: Response): Promise<Response> {
         try {
             const { id } = req.params;
 
-            const cidadeRepository = AppDataSource.getRepository(Cidade);
+            const cidadeRepository = db.getRepository(Cidade);
             const cidade = await cidadeRepository.findOne({
                 where: { id: Number(id) },
             });

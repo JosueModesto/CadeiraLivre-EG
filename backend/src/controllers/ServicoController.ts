@@ -1,8 +1,10 @@
 import { Request, Response } from "express";
-import { AppDataSource } from "../data-source";
+import { DatabaseSingleton } from "../padrao/singleton";
 import { BarbeariaServico } from "../entities/BarbeariaServico";
 import { TipoUsuario } from "../entities/Usuario";
 import { AuthRequest } from "../middlewares/auth.middleware";
+
+const db = DatabaseSingleton.getInstance();
 
 export class ServicoController {
 	async create(req: Request, res: Response): Promise<Response> {
@@ -15,7 +17,7 @@ export class ServicoController {
 		}
 
 		try {
-			const servicoRepository = AppDataSource.getRepository(BarbeariaServico);
+			const servicoRepository = db.getRepository(BarbeariaServico);
 			const novoServico = servicoRepository.create({
 				barbearia_id,
 				nome_servico,
@@ -40,7 +42,7 @@ export class ServicoController {
 	async getAll(req: Request, res: Response): Promise<Response> {
 		try {
 			const { barbearia_id } = req.query;
-			const servicoRepository = AppDataSource.getRepository(BarbeariaServico);
+			const servicoRepository = db.getRepository(BarbeariaServico);
 			
 			let query = servicoRepository.createQueryBuilder("servico");
 			
@@ -73,7 +75,7 @@ export class ServicoController {
 		try {
 			const { id } = req.params;
 
-			const servicoRepository = AppDataSource.getRepository(BarbeariaServico);
+			const servicoRepository = db.getRepository(BarbeariaServico);
 			const servico = await servicoRepository.findOne({
 				where: { id: Number(id) },
 				select: ["id", "barbearia_id", "nome_servico", "preco", "duracao_min"],
@@ -99,7 +101,7 @@ export class ServicoController {
 			const { id } = req.params;
 			const { barbearia_id, nome_servico, preco, duracao_min } = req.body;
 
-			const servicoRepository = AppDataSource.getRepository(BarbeariaServico);
+			const servicoRepository = db.getRepository(BarbeariaServico);
 			const servico = await servicoRepository.findOne({
 				where: { id: Number(id) },
 				relations: ["barbearia"],
@@ -156,7 +158,7 @@ export class ServicoController {
 		try {
 			const { id } = req.params;
 
-			const servicoRepository = AppDataSource.getRepository(BarbeariaServico);
+			const servicoRepository = db.getRepository(BarbeariaServico);
 			const servico = await servicoRepository.findOne({
 				where: { id: Number(id) },
 			});
@@ -180,4 +182,5 @@ export class ServicoController {
 		}
 	}
 }
+
 

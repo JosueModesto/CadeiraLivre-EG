@@ -1,8 +1,10 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { AppDataSource } from "../data-source";
+import { DatabaseSingleton } from "../padrao/singleton";
 import { TipoUsuario, Usuario } from "../entities/Usuario";
+
+const db = DatabaseSingleton.getInstance();
 
 const JWT_SECRET = process.env.JWT_SECRET || "chave_secreta_barbearia_123";
 
@@ -30,7 +32,7 @@ export class AuthController {
         });
       }
 
-      const usuarioRepository = AppDataSource.getRepository(Usuario);
+      const usuarioRepository = db.getRepository(Usuario);
 
       const usuarioExistente = await usuarioRepository.findOne({
         where: { email },
@@ -85,7 +87,7 @@ export class AuthController {
         });
       }
 
-      const usuarioRepository = AppDataSource.getRepository(Usuario);
+      const usuarioRepository = db.getRepository(Usuario);
 
       const usuario = await usuarioRepository
         .createQueryBuilder("usuario")
@@ -137,3 +139,4 @@ export class AuthController {
     }
   }
 }
+
