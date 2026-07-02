@@ -174,8 +174,7 @@ export default function BarbeariaAgendamentos() {
       setSuccess("Agendamento cancelado com sucesso.");
     } catch (err) {
       setError(err.response?.data?.message || "Não foi possível cancelar este agendamento.");
-    } finally {
-      setCancellingId(null);
+      setConcludingId(null);
     }
   }
 

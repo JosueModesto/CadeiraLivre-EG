@@ -25,6 +25,7 @@ export class CidadeController{
             const cidadeSalva = await cidadeRepository.save(novaCidade);
             return res.status(201).json({
                 message: "Cidade criada com sucesso!",
+                cidade: cidadeSalva,
             });
         } catch (error: any) {
             return res.status(500).json({
@@ -108,7 +109,7 @@ async getById(req: Request, res: Response): Promise<Response> {
             }
 
             if (nome) cidade.nome = nome;
-            if (estado) cidade.estado = estado.toUpperCase();
+            if (estado) cidade.estado = estado.trim().toUpperCase();
 
             const cidadeAtualizada = await cidadeRepository.save(cidade);
 

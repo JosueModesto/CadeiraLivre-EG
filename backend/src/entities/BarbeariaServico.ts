@@ -14,15 +14,15 @@ export class BarbeariaServico {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ type: "int", nullable: false })
-  barbearia_id!: number;
+  @Column({ type: "int", nullable: true })
+  barbearia_id?: number | null;
 
   @ManyToOne(() => Barbearia, (barbearia) => barbearia.servicos, {
-    nullable: false,
+    nullable: true,
     onDelete: "CASCADE",
   })
   @JoinColumn({ name: "barbearia_id" })
-  barbearia!: Barbearia;
+  barbearia?: Barbearia | null;
 
   @Column({ type: "varchar", length: 100, nullable: false })
   nome_servico!: string;
@@ -32,6 +32,9 @@ export class BarbeariaServico {
 
   @Column({ type: "int", nullable: false })
   duracao_min!: number;
+
+  @Column({ type: "boolean", nullable: false, default: true })
+  ativo!: boolean;
 
   @OneToMany(() => AgendamentoItem, (item) => item.servico)
   itens?: AgendamentoItem[];

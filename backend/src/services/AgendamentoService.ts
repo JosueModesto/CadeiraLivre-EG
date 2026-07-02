@@ -129,7 +129,7 @@ export class AgendamentoService {
       return { erro: "Barbeiro não encontrado nesta barbearia", status: 404 } as const;
     }
 
-    const servicos = await this.servicoRepo.findBy({ id: In(servico_ids), barbearia_id } as any);
+    const servicos = await this.servicoRepo.findBy({ id: In(servico_ids), barbearia_id, ativo: true } as any);
     if (servicos.length !== servico_ids.length) {
       return { erro: "Um ou mais serviços são inválidos para esta barbearia", status: 400 } as const;
     }
