@@ -179,6 +179,52 @@ export class AgendamentoService {
     return { agendamento: agendamentoCompleto, status: 201 } as const;
   }
 
+  async cancelarAgendamento(agendamentoId: number, clienteId: number) {
+    const agendamento = await this.agendamentoRepo.findOne({
+      where: { id: agendamentoId, cliente_id: clienteId },
+    });
+
+    if (!agendamento) {
+      return { erro: "Agendamento não encontrado", status: 404 } as const;
+    }
+
+    if (agendamento.status === StatusAgendamento.CANCELADO) {
+      return { erro: "Este agendamento já foi cancelado", status: 400 } as const;
+    }
+
+    if (agendamento.status !== StatusAgendamento.AGENDADO) {
+      return { erro: "Este agendamento não pode ser cancelado", status: 400 } as const;
+    }
+
+    agendamento.status = StatusAgendamento.CANCELADO;
+    const atualizado = await this.agendamentoRepo.save(agendamento);
+
+    return { agendamento: atualizado, status: 200 } as const;
+  }
+
+  async cancelarAgendamentoPorBarbearia(agendamentoId: number, barbeariaId: number) {
+    const agendamento = await this.agendamentoRepo.findOne({
+      where: { id: agendamentoId, barbearia_id: barbeariaId },
+    });
+
+    if (!agendamento) {
+      return { erro: "Agendamento não encontrado", status: 404 } as const;
+    }
+
+    if (agendamento.status === StatusAgendamento.CANCELADO) {
+      return { erro: "Este agendamento já foi cancelado", status: 400 } as const;
+    }
+
+    if (agendamento.status !== StatusAgendamento.AGENDADO) {
+      return { erro: "Este agendamento não pode ser cancelado", status: 400 } as const;
+    }
+
+    agendamento.status = StatusAgendamento.CANCELADO;
+    const atualizado = await this.agendamentoRepo.save(agendamento);
+
+    return { agendamento: atualizado, status: 200 } as const;
+  }
+
   async getSlotsDisponiveis(barbearia_id: number, barbeiro_id: number, data: string) {
     const barbearia = await this.barbeariaRepo.findOne({ where: { id: barbearia_id } });
     if (!barbearia) {

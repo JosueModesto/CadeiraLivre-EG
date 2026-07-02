@@ -20,6 +20,11 @@ export const agendamentoService = {
     const response = await apiClient.get("/api/agendamentos/check-availability", { params });
     return response.data;
   },
+
+  cancel: async (agendamentoId) => {
+    const response = await apiClient.patch(`/api/agendamentos/${agendamentoId}/cancel`);
+    return response.data;
+  },
 };
 
 export default agendamentoService;

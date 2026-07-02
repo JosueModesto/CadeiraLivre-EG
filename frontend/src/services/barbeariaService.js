@@ -31,6 +31,11 @@ export const barbeariaService = {
     return response.data;
   },
 
+  cancelAgendamento: async (barbeariaId, agendamentoId) => {
+    const response = await apiClient.patch(`/api/barbearias/${barbeariaId}/agendamentos/${agendamentoId}/cancel`);
+    return response.data;
+  },
+
   update: async (id, data) => {
     const response = await apiClient.put(`/api/barbearias/${id}`, data);
     return response.data;

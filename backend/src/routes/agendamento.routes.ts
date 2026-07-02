@@ -25,4 +25,9 @@ router.get("/my-appointments", authenticateToken, (req, res) =>
   agendamentoController.getMyAppointments(req, res)
 );
 
+// Cancelar agendamento do usuário (requer autenticação)
+router.patch("/:id/cancel", authenticateToken, (req, res) =>
+  agendamentoController.cancel(req, res)
+);
+
 export default router;
