@@ -18,6 +18,18 @@ const barbeariaInicial = {
   descricao: "",
 };
 
+const REGEX_SOMENTE_DIGITOS = /^\d+$/;
+const REGEX_NOME_APENAS_LETRAS_ESPACOS = /^[A-Za-zÀ-ÖØ-öø-ÿ\s]+$/;
+
+function validarTelefoneSomenteNumeros(valor) {
+  return REGEX_SOMENTE_DIGITOS.test(String(valor || "").trim());
+}
+
+function validarNomeSemNumerosESimbolos(valor) {
+  const nome = String(valor || "").trim();
+  return nome.length >= 2 && REGEX_NOME_APENAS_LETRAS_ESPACOS.test(nome);
+}
+
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -115,6 +127,17 @@ export default function Login() {
       setError("Preencha nome, telefone, e-mail e senha.");
       return;
     }
+
+    if (!validarNomeSemNumerosESimbolos(cliente.nome)) {
+      setError("Nome deve conter apenas letras e espaços.");
+      return;
+    }
+
+    if (!validarTelefoneSomenteNumeros(cliente.telefone)) {
+      setError("Telefone deve conter apenas números.");
+      return;
+    }
+
     if (cliente.senha.length < 6) {
       setError("A senha deve ter no mínimo 6 caracteres.");
       return;
@@ -123,8 +146,8 @@ export default function Login() {
     setLoading(true);
     try {
       await authService.register({
-        nome: cliente.nome,
-        telefone: cliente.telefone,
+        nome: cliente.nome.trim(),
+        telefone: cliente.telefone.trim(),
         email: cliente.email,
         senha: cliente.senha,
         tipo_usuario: "cliente",
@@ -156,6 +179,22 @@ export default function Login() {
       setError("Preencha todos os campos obrigatórios da conta e da barbearia.");
       return;
     }
+
+    if (!validarNomeSemNumerosESimbolos(barbearia.nome)) {
+      setError("Nome do responsável deve conter apenas letras e espaços.");
+      return;
+    }
+
+    if (!validarTelefoneSomenteNumeros(barbearia.telefone)) {
+      setError("Telefone pessoal deve conter apenas números.");
+      return;
+    }
+
+    if (barbearia.telefone_comercial && !validarTelefoneSomenteNumeros(barbearia.telefone_comercial)) {
+      setError("Telefone comercial deve conter apenas números.");
+      return;
+    }
+
     if (barbearia.senha.length < 6) {
       setError("A senha deve ter no mínimo 6 caracteres.");
       return;
@@ -167,8 +206,8 @@ export default function Login() {
 
       // 1) Cria o usuário dono
       const usuario = await authService.register({
-        nome: barbearia.nome,
-        telefone: barbearia.telefone,
+        nome: barbearia.nome.trim(),
+        telefone: barbearia.telefone.trim(),
         email: barbearia.email,
         senha: barbearia.senha,
         tipo_usuario: "barbearia",
@@ -179,7 +218,7 @@ export default function Login() {
       await barbeariaService.create({
         usuario_id: usuario.id,
         nome_comercial: barbearia.nome_comercial,
-        telefone_comercial: barbearia.telefone_comercial || null,
+        telefone_comercial: barbearia.telefone_comercial ? barbearia.telefone_comercial.trim() : null,
         endereco: barbearia.endereco,
         cidade_id: cidadeId,
         descricao: barbearia.descricao || "",
@@ -275,7 +314,7 @@ export default function Login() {
             <form onSubmit={handleCadastroCliente} className="stack stack-4">
               <div className="section-label">Dados do cliente</div>
               <Campo label="Nome completo" required value={cliente.nome} onChange={(v) => atualizarCliente("nome", v)} placeholder="Seu nome" />
-              <Campo label="Telefone" required type="tel" value={cliente.telefone} onChange={(v) => atualizarCliente("telefone", v)} placeholder="(44) 99999-0000" />
+              <Campo label="Telefone" required type="tel" value={cliente.telefone} onChange={(v) => atualizarCliente("telefone", v)} placeholder="Ex.: 44999990000" />
               <Campo label="E-mail" required type="email" value={cliente.email} onChange={(v) => atualizarCliente("email", v)} placeholder="voce@exemplo.com" />
               <CampoSenha label="Senha" required value={cliente.senha} onChange={(v) => atualizarCliente("senha", v)} show={showPassword} toggle={() => setShowPassword((s) => !s)} />
               <SelectCidade
@@ -297,13 +336,13 @@ export default function Login() {
             <form onSubmit={handleCadastroBarbearia} className="stack stack-4">
               <div className="section-label">Dados de acesso</div>
               <Campo label="Nome do responsável" required value={barbearia.nome} onChange={(v) => atualizarBarbearia("nome", v)} placeholder="Seu nome" />
-              <Campo label="Telefone pessoal" required type="tel" value={barbearia.telefone} onChange={(v) => atualizarBarbearia("telefone", v)} placeholder="(44) 99999-0000" />
+              <Campo label="Telefone pessoal" required type="tel" value={barbearia.telefone} onChange={(v) => atualizarBarbearia("telefone", v)} placeholder="Ex.: 44999990000" />
               <Campo label="E-mail" required type="email" value={barbearia.email} onChange={(v) => atualizarBarbearia("email", v)} placeholder="voce@exemplo.com" />
               <CampoSenha label="Senha" required value={barbearia.senha} onChange={(v) => atualizarBarbearia("senha", v)} show={showPassword} toggle={() => setShowPassword((s) => !s)} />
 
               <div className="section-label mt-2">Dados da barbearia</div>
               <Campo label="Nome comercial" required value={barbearia.nome_comercial} onChange={(v) => atualizarBarbearia("nome_comercial", v)} placeholder="Ex.: Barbearia Central" />
-              <Campo label="Telefone comercial" optional type="tel" value={barbearia.telefone_comercial} onChange={(v) => atualizarBarbearia("telefone_comercial", v)} placeholder="(44) 3020-0000" />
+              <Campo label="Telefone comercial" optional type="tel" value={barbearia.telefone_comercial} onChange={(v) => atualizarBarbearia("telefone_comercial", v)} placeholder="Ex.: 4430200000" />
               <Campo label="Endereço" required value={barbearia.endereco} onChange={(v) => atualizarBarbearia("endereco", v)} placeholder="Rua, número - bairro" />
               <SelectCidade
                 required
@@ -352,6 +391,8 @@ export default function Login() {
 /* -------------------------------------------------------- Subcomponentes -- */
 
 function Campo({ label, value, onChange, placeholder, type = "text", required = false, optional = false }) {
+  const isTel = type === "tel";
+
   return (
     <div className="field">
       <label>
@@ -359,7 +400,14 @@ function Campo({ label, value, onChange, placeholder, type = "text", required = 
         {required ? <span style={requiredMarkStyle}>*</span> : null}
         {optional ? " (opcional)" : ""}
       </label>
-      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        inputMode={isTel ? "numeric" : undefined}
+        pattern={isTel ? "[0-9]*" : undefined}
+      />
     </div>
   );
 }

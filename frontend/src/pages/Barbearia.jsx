@@ -16,6 +16,18 @@ const DIAS_SEMANA = [
   { value: 6, label: "Sábado" },
 ];
 
+const REGEX_SOMENTE_DIGITOS = /^\d+$/;
+const REGEX_NOME_APENAS_LETRAS_ESPACOS = /^[A-Za-zÀ-ÖØ-öø-ÿ\s]+$/;
+
+function validarTelefoneSomenteNumeros(valor) {
+  return REGEX_SOMENTE_DIGITOS.test(String(valor || "").trim());
+}
+
+function validarNomeSemNumerosESimbolos(valor) {
+  const nome = String(valor || "").trim();
+  return nome.length >= 2 && REGEX_NOME_APENAS_LETRAS_ESPACOS.test(nome);
+}
+
 function disponibilidadeInicial() {
   return DIAS_SEMANA.reduce((acc, dia) => {
     acc[dia.value] = [{ hora_inicio: "08:00", hora_fim: "18:00", esta_disponivel: true }];
@@ -212,14 +224,25 @@ export default function Barbearia() {
   async function criarBarbeiro(event) {
     event.preventDefault();
     if (!barbearia) return;
+
+    if (!validarNomeSemNumerosESimbolos(novoBarbeiro.nome)) {
+      setError("Nome do barbeiro deve conter apenas letras e espaços.");
+      return;
+    }
+
+    if (!validarTelefoneSomenteNumeros(novoBarbeiro.telefone)) {
+      setError("Telefone do barbeiro deve conter apenas números.");
+      return;
+    }
+
     setSavingBarbeiro(true);
     setError("");
     setSuccess("");
     try {
       const response = await barbeiroService.create({
         barbearia_id: barbearia.id,
-        nome: novoBarbeiro.nome,
-        telefone: novoBarbeiro.telefone,
+        nome: novoBarbeiro.nome.trim(),
+        telefone: novoBarbeiro.telefone.trim(),
         ativo: novoBarbeiro.ativo,
       });
       const item = response.barbeiro;
@@ -583,9 +606,12 @@ export default function Barbearia() {
                   placeholder="Nome do barbeiro"
                 />
                 <input
+                  type="tel"
                   value={novoBarbeiro.telefone}
                   onChange={(e) => setNovoBarbeiro((c) => ({ ...c, telefone: e.target.value }))}
-                  placeholder="Telefone"
+                  placeholder="Ex.: 44999990000"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                 />
                 <button type="submit" className="btn btn--primary" disabled={savingBarbeiro}>
                   {savingBarbeiro ? "..." : "Adicionar"}

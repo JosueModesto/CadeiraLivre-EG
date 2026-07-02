@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import { DatabaseSingleton } from "../padrao/singleton";
 import { TipoUsuario, Usuario } from "../entities/Usuario";
+import { nomeSemNumerosESimbolos, telefoneSomenteNumeros } from "../utils/validation";
 
 const db = DatabaseSingleton.getInstance();
 
@@ -14,6 +15,18 @@ export class UsuarioController {
       if (!nome || !email || !senha || !telefone || !tipo_usuario) {
         return res.status(400).json({
           message: "Campos obrigatórios faltando",
+        });
+      }
+
+      if (!nomeSemNumerosESimbolos(nome)) {
+        return res.status(400).json({
+          message: "Nome deve conter apenas letras e espaços",
+        });
+      }
+
+      if (!telefoneSomenteNumeros(telefone)) {
+        return res.status(400).json({
+          message: "Telefone deve conter apenas números",
         });
       }
 
@@ -44,10 +57,10 @@ export class UsuarioController {
       const senhaHash = await bcrypt.hash(senha, 10);
 
       const novoUsuario = usuarioRepository.create({
-        nome,
+        nome: String(nome).trim(),
         email,
         senha: senhaHash,
-        telefone,
+        telefone: String(telefone).trim(),
         endereco: endereco || null,
         tipo_usuario,
         cidade_id: cidade_id || null,
@@ -135,9 +148,21 @@ export class UsuarioController {
         });
       }
 
+      if (nome !== undefined && !nomeSemNumerosESimbolos(nome)) {
+        return res.status(400).json({
+          message: "Nome deve conter apenas letras e espaços",
+        });
+      }
+
+      if (telefone !== undefined && !telefoneSomenteNumeros(telefone)) {
+        return res.status(400).json({
+          message: "Telefone deve conter apenas números",
+        });
+      }
+
       // Atualizar campos
-      if (nome) usuario.nome = nome;
-      if (telefone) usuario.telefone = telefone;
+      if (nome) usuario.nome = String(nome).trim();
+      if (telefone) usuario.telefone = String(telefone).trim();
       if (endereco !== undefined) usuario.endereco = endereco || null;
       if (tipo_usuario === TipoUsuario.ADMINISTRADOR) {
         return res.status(403).json({
