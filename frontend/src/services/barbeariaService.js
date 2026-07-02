@@ -1,6 +1,11 @@
 import { apiClient } from "./api";
 
 export const barbeariaService = {
+  create: async (data) => {
+    const response = await apiClient.post("/api/barbearias", data);
+    return response.data;
+  },
+
   getAll: async (params = {}) => {
     const response = await apiClient.get("/api/barbearias", { params });
     return response.data;

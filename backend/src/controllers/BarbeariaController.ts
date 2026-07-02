@@ -6,7 +6,7 @@ export class BarbeariaController {
   async create(req: Request, res: Response): Promise<Response> {
     const { usuario_id, nome_comercial, telefone_comercial, endereco, cidade_id, descricao } = req.body;
 
-    if (!usuario_id || !nome_comercial || !telefone_comercial || !endereco || !cidade_id) {
+    if (!usuario_id || !nome_comercial || !endereco || !cidade_id) {
       return res.status(400).json({
         message: "Campos obrigatórios faltando",
       });
@@ -17,7 +17,7 @@ export class BarbeariaController {
       const novaBarbearia = barbeariaRepository.create({
         usuario_id,
         nome_comercial,
-        telefone_comercial,
+        telefone_comercial: telefone_comercial || null,
         endereco,
         cidade_id,
         descricao: descricao || "",
@@ -125,7 +125,9 @@ export class BarbeariaController {
       }
 
       if (nome_comercial) barbearia.nome_comercial = nome_comercial;
-      if (telefone_comercial) barbearia.telefone_comercial = telefone_comercial;
+      if (telefone_comercial !== undefined) {
+        barbearia.telefone_comercial = telefone_comercial || null;
+      }
       if (endereco) barbearia.endereco = endereco;
       if (cidade_id !== undefined) barbearia.cidade_id = cidade_id;
       if (descricao !== undefined) barbearia.descricao = descricao;

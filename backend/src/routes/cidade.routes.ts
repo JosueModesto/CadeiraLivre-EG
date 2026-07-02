@@ -9,13 +9,9 @@ router.post("/", authenticateToken, requireAdmin, (req, res) =>
 	cidadeController.create(req, res)
 );
 
-router.get("/", authenticateToken, requireAdmin, (req, res) =>
-	cidadeController.getAll(req, res)
-);
+router.get("/", (req, res) => cidadeController.getAll(req, res));
 
-router.get("/:id", authenticateToken, requireAdmin, (req, res) =>
-	cidadeController.getById(req, res)
-);
+router.get("/:id", (req, res) => cidadeController.getById(req, res));
 
 router.put("/:id", authenticateToken, requireAdmin, (req, res) =>
 	cidadeController.update(req, res)
