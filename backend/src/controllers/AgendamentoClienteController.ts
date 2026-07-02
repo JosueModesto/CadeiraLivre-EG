@@ -64,6 +64,37 @@ export class AgendamentoClienteController {
     }
   }
 
+  async cancel(req: Request, res: Response): Promise<Response> {
+    try {
+      const cliente_id = (req as any).user?.id;
+      const agendamentoId = Number(req.params.id);
+
+      if (!cliente_id) {
+        return res.status(401).json({ message: "Usuário não autenticado" });
+      }
+
+      if (!agendamentoId || Number.isNaN(agendamentoId)) {
+        return res.status(400).json({ message: "ID do agendamento inválido" });
+      }
+
+      const resultado = await this.agendamentoService.cancelarAgendamento(agendamentoId, Number(cliente_id));
+
+      if ("erro" in resultado) {
+        return res.status(resultado.status).json({ message: resultado.erro });
+      }
+
+      return res.status(200).json({
+        message: "Agendamento cancelado com sucesso",
+        agendamento: resultado.agendamento,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: "Erro ao cancelar agendamento",
+        error: (error as Error).message,
+      });
+    }
+  }
+
   async getAvailableSlots(req: Request, res: Response): Promise<Response> {
     try {
       const { barbearia_id, barbeiro_id, data } = req.query;

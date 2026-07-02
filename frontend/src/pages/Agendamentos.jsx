@@ -23,6 +23,8 @@ export default function Agendamentos() {
   const [agendamentos, setAgendamentos] = useState([]);
   const [mapaServicos, setMapaServicos] = useState({});
   const [loading, setLoading] = useState(true);
+  const [cancellingId, setCancellingId] = useState(null);
+  const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -54,6 +56,26 @@ export default function Agendamentos() {
     carregar();
   }, []);
 
+  async function cancelarAgendamento(agendamentoId) {
+    const confirmar = window.confirm("Deseja realmente cancelar este agendamento?");
+    if (!confirmar) return;
+
+    setCancellingId(agendamentoId);
+    setError("");
+    setSuccess("");
+    try {
+      await agendamentoService.cancel(agendamentoId);
+      setAgendamentos((current) =>
+        current.map((item) => (item.id === agendamentoId ? { ...item, status: "cancelado" } : item))
+      );
+      setSuccess("Agendamento cancelado com sucesso.");
+    } catch (err) {
+      setError(err.response?.data?.message || "Não foi possível cancelar este agendamento.");
+    } finally {
+      setCancellingId(null);
+    }
+  }
+
   return (
     <div className="app-shell">
       <Navbar title="Meus agendamentos" onBack={() => navigate("/dashboard")} />
@@ -74,9 +96,12 @@ export default function Agendamentos() {
             <div className="spinner" style={{ margin: "0 auto 16px" }} />
             <p className="muted">Carregando agendamentos...</p>
           </div>
-        ) : error ? (
-          <div className="alert alert--error">{error}</div>
-        ) : agendamentos.length === 0 ? (
+        ) : (
+          <>
+            {error ? <div className="alert alert--error" style={{ marginBottom: "16px" }}>{error}</div> : null}
+            {success ? <div className="alert alert--success" style={{ marginBottom: "16px" }}>{success}</div> : null}
+
+            {agendamentos.length === 0 ? (
           <div className="card empty">
             <h2 className="card-title">Nenhum agendamento por aqui</h2>
             <p className="muted mt-2">Escolha uma barbearia e reserve seu primeiro horário.</p>
@@ -84,7 +109,7 @@ export default function Agendamentos() {
               Agendar agora
             </button>
           </div>
-        ) : (
+            ) : (
           <div className="stack stack-5">
             {agendamentos.map((agendamento) => {
               const servicos = (agendamento.itens || []).map(
@@ -131,10 +156,25 @@ export default function Agendamentos() {
                       )}
                     </div>
                   </div>
+
+                  {agendamento.status === "agendado" ? (
+                    <div className="mt-6" style={{ display: "flex", justifyContent: "flex-end" }}>
+                      <button
+                        type="button"
+                        className="btn btn--danger"
+                        onClick={() => cancelarAgendamento(agendamento.id)}
+                        disabled={cancellingId === agendamento.id}
+                      >
+                        {cancellingId === agendamento.id ? "Cancelando..." : "Cancelar agendamento"}
+                      </button>
+                    </div>
+                  ) : null}
                 </article>
               );
             })}
           </div>
+            )}
+          </>
         )}
       </main>
     </div>

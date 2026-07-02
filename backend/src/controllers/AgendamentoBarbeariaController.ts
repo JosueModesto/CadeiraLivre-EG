@@ -6,6 +6,7 @@ import { Barbearia } from "../entities/Barbearia";
 import { BarbeariaFuncionamento } from "../entities/BarbeariaFuncionamento";
 import { AuthRequest } from "../middlewares/auth.middleware";
 import { AgendamentoDisponibilidadeService } from "../services/AgendamentoDisponibilidadeService";
+import { AgendamentoService } from "../services/AgendamentoService";
 
 type FuncionamentoInput = {
   dia_semana: number;
@@ -18,6 +19,7 @@ export class AgendamentoBarbeariaController {
   private readonly barbeariaRepo = AppDataSource.getRepository(Barbearia);
   private readonly funcionamentoRepo = AppDataSource.getRepository(BarbeariaFuncionamento);
   private readonly agendamentoRepo = AppDataSource.getRepository(Agendamento);
+  private readonly agendamentoService = new AgendamentoService();
 
   private async obterBarbeariaDoUsuario(barbeariaId: number, usuarioId: number) {
     return this.barbeariaRepo.findOne({ where: { id: barbeariaId, usuario_id: usuarioId } });
@@ -289,6 +291,43 @@ export class AgendamentoBarbeariaController {
     } catch (error) {
       return res.status(500).json({
         message: "Erro ao buscar próximos agendamentos",
+        error: (error as Error).message,
+      });
+    }
+  }
+
+  async cancelAgendamento(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const barbeariaId = Number(req.params.id);
+      const agendamentoId = Number(req.params.agendamentoId);
+      const usuarioId = Number(req.user?.id || req.user?.userId);
+
+      if (!usuarioId) {
+        return res.status(401).json({ message: "Usuário não autenticado" });
+      }
+
+      if (!agendamentoId || Number.isNaN(agendamentoId)) {
+        return res.status(400).json({ message: "ID do agendamento inválido" });
+      }
+
+      const barbearia = await this.obterBarbeariaDoUsuario(barbeariaId, usuarioId);
+      if (!barbearia) {
+        return res.status(404).json({ message: "Barbearia não encontrada para este usuário" });
+      }
+
+      const resultado = await this.agendamentoService.cancelarAgendamentoPorBarbearia(agendamentoId, barbearia.id);
+
+      if ("erro" in resultado) {
+        return res.status(resultado.status).json({ message: resultado.erro });
+      }
+
+      return res.status(200).json({
+        message: "Agendamento cancelado com sucesso",
+        agendamento: resultado.agendamento,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: "Erro ao cancelar agendamento",
         error: (error as Error).message,
       });
     }
