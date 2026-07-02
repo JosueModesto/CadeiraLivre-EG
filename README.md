@@ -9,7 +9,8 @@ No backend, o uso foi direcionado principalmente para compreender o funcionament
 Outro uso frequente foi a automatização de tarefas repetitivas, como a alteração de todas as chamadas de AppDataSource.getRepository nos controllers para db.getRepository, em função da adoção do padrão Singleton.
 As ferramentas também contribuíram para o planejamento e a definição da melhor abordagem para implementar as regras de negócio do projeto, auxiliando na análise de alternativas e na resolução de dúvidas durante o desenvolvimento.
 Por fim, também foram utilizadas para revisar, corrigir e padronizar as descrições dos Pull Requests, garantindo maior clareza e consistência na documentação das alterações realizadas.
-O seed.js com a população do banco foi feito totalmente pelo ChatGpt
+O seed.js com a população do banco foi feito totalmente pelo ChatGpt.
+Por último ajudaram a entender como funciona e como utilizar o jest para implementar os testes.
 # Cadeira Livre
 
 Sistema web para gestão de barbearia e agendamentos, com perfis de cliente, dono de barbearia e administrador.
