@@ -1,7 +1,9 @@
 import { Request, Response } from "express";
-import { AppDataSource } from "../data-source";
+import { DatabaseSingleton } from "../padrao/singleton";
 import { Agendamento } from "../entities/Agendamento";
 import { AgendamentoService } from "../services/AgendamentoService";
+
+const db = DatabaseSingleton.getInstance();
 
 export class AgendamentoClienteController {
   constructor(private readonly agendamentoService: AgendamentoService = new AgendamentoService()) {}
@@ -48,7 +50,7 @@ export class AgendamentoClienteController {
         return res.status(401).json({ message: "Usuário não autenticado" });
       }
 
-      const agendamentoRepository = AppDataSource.getRepository(Agendamento);
+      const agendamentoRepository = db.getRepository(Agendamento);
       const agendamentos = await agendamentoRepository.find({
         where: { cliente_id: Number(cliente_id) },
         relations: ["barbearia", "barbeiro", "itens"],
@@ -59,6 +61,37 @@ export class AgendamentoClienteController {
     } catch (error) {
       return res.status(500).json({
         message: "Erro ao buscar agendamentos",
+        error: (error as Error).message,
+      });
+    }
+  }
+
+  async cancel(req: Request, res: Response): Promise<Response> {
+    try {
+      const cliente_id = (req as any).user?.id;
+      const agendamentoId = Number(req.params.id);
+
+      if (!cliente_id) {
+        return res.status(401).json({ message: "Usuário não autenticado" });
+      }
+
+      if (!agendamentoId || Number.isNaN(agendamentoId)) {
+        return res.status(400).json({ message: "ID do agendamento inválido" });
+      }
+
+      const resultado = await this.agendamentoService.cancelarAgendamento(agendamentoId, Number(cliente_id));
+
+      if ("erro" in resultado) {
+        return res.status(resultado.status).json({ message: resultado.erro });
+      }
+
+      return res.status(200).json({
+        message: "Agendamento cancelado com sucesso",
+        agendamento: resultado.agendamento,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: "Erro ao cancelar agendamento",
         error: (error as Error).message,
       });
     }

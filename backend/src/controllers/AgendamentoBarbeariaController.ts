@@ -1,11 +1,14 @@
 import { Response } from "express";
 import { Between, MoreThanOrEqual } from "typeorm";
-import { AppDataSource } from "../data-source";
+import { DatabaseSingleton } from "../padrao/singleton";
 import { Agendamento, StatusAgendamento } from "../entities/Agendamento";
 import { Barbearia } from "../entities/Barbearia";
 import { BarbeariaFuncionamento } from "../entities/BarbeariaFuncionamento";
 import { AuthRequest } from "../middlewares/auth.middleware";
 import { AgendamentoDisponibilidadeService } from "../services/AgendamentoDisponibilidadeService";
+import { AgendamentoService } from "../services/AgendamentoService";
+
+const db = DatabaseSingleton.getInstance();
 
 type FuncionamentoInput = {
   dia_semana: number;
@@ -15,9 +18,10 @@ type FuncionamentoInput = {
 };
 
 export class AgendamentoBarbeariaController {
-  private readonly barbeariaRepo = AppDataSource.getRepository(Barbearia);
-  private readonly funcionamentoRepo = AppDataSource.getRepository(BarbeariaFuncionamento);
-  private readonly agendamentoRepo = AppDataSource.getRepository(Agendamento);
+  private readonly barbeariaRepo = db.getRepository(Barbearia);
+  private readonly funcionamentoRepo = db.getRepository(BarbeariaFuncionamento);
+  private readonly agendamentoRepo = db.getRepository(Agendamento);
+  private readonly agendamentoService = new AgendamentoService();
 
   private async obterBarbeariaDoUsuario(barbeariaId: number, usuarioId: number) {
     return this.barbeariaRepo.findOne({ where: { id: barbeariaId, usuario_id: usuarioId } });
@@ -240,7 +244,6 @@ export class AgendamentoBarbeariaController {
     try {
       const barbeariaId = Number(req.params.id);
       const usuarioId = Number(req.user?.id || req.user?.userId);
-      const data = req.query.data ? String(req.query.data) : null;
 
       if (!usuarioId) {
         return res.status(401).json({ message: "Usuário não autenticado" });
@@ -251,11 +254,9 @@ export class AgendamentoBarbeariaController {
         return res.status(404).json({ message: "Barbearia não encontrada para este usuário" });
       }
 
-      const agora = new Date();
-      const inicioReferencia = data ? new Date(`${data}T00:00:00`) : agora;
-      const referencia = inicioReferencia > agora ? inicioReferencia : agora;
+      const referencia = new Date();
 
-      const agendamentosFuturos = await this.agendamentoRepo.find({
+      const agendamentos = await this.agendamentoRepo.find({
         where: {
           barbearia_id: barbearia.id,
           status: StatusAgendamento.AGENDADO,
@@ -263,32 +264,50 @@ export class AgendamentoBarbeariaController {
         },
         relations: ["cliente", "barbeiro", "itens"],
         order: { data_hora_inicio: "ASC" },
-      });
-
-      if (agendamentosFuturos.length === 0) {
-        return res.status(200).json({ agendamentos: [] });
-      }
-
-      const primeiroHorario = new Date(agendamentosFuturos[0].data_hora_inicio);
-      const diaInicio = new Date(primeiroHorario);
-      diaInicio.setHours(0, 0, 0, 0);
-      const diaFim = new Date(primeiroHorario);
-      diaFim.setHours(23, 59, 59, 999);
-
-      const agendamentos = await this.agendamentoRepo.find({
-        where: {
-          barbearia_id: barbearia.id,
-          status: StatusAgendamento.AGENDADO,
-          data_hora_inicio: Between(diaInicio, diaFim),
-        },
-        relations: ["cliente", "barbeiro", "itens"],
-        order: { data_hora_inicio: "ASC" },
+        take: 5,
       });
 
       return res.status(200).json({ agendamentos });
     } catch (error) {
       return res.status(500).json({
         message: "Erro ao buscar próximos agendamentos",
+        error: (error as Error).message,
+      });
+    }
+  }
+
+  async cancelAgendamento(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const barbeariaId = Number(req.params.id);
+      const agendamentoId = Number(req.params.agendamentoId);
+      const usuarioId = Number(req.user?.id || req.user?.userId);
+
+      if (!usuarioId) {
+        return res.status(401).json({ message: "Usuário não autenticado" });
+      }
+
+      if (!agendamentoId || Number.isNaN(agendamentoId)) {
+        return res.status(400).json({ message: "ID do agendamento inválido" });
+      }
+
+      const barbearia = await this.obterBarbeariaDoUsuario(barbeariaId, usuarioId);
+      if (!barbearia) {
+        return res.status(404).json({ message: "Barbearia não encontrada para este usuário" });
+      }
+
+      const resultado = await this.agendamentoService.cancelarAgendamentoPorBarbearia(agendamentoId, barbearia.id);
+
+      if ("erro" in resultado) {
+        return res.status(resultado.status).json({ message: resultado.erro });
+      }
+
+      return res.status(200).json({
+        message: "Agendamento cancelado com sucesso",
+        agendamento: resultado.agendamento,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: "Erro ao cancelar agendamento",
         error: (error as Error).message,
       });
     }

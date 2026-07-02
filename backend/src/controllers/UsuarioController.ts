@@ -1,12 +1,14 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
-import { AppDataSource } from "../data-source";
+import { DatabaseSingleton } from "../padrao/singleton";
 import { TipoUsuario, Usuario } from "../entities/Usuario";
+
+const db = DatabaseSingleton.getInstance();
 
 export class UsuarioController {
   async create(req: Request, res: Response): Promise<Response> {
     try {
-      const { nome, email, senha, telefone, tipo_usuario, cidade_id } = req.body;
+      const { nome, email, senha, telefone, endereco, tipo_usuario, cidade_id } = req.body;
 
       if (!nome || !email || !senha || !telefone || !tipo_usuario) {
         return res.status(400).json({
@@ -26,7 +28,7 @@ export class UsuarioController {
         });
       }
 
-      const usuarioRepository = AppDataSource.getRepository(Usuario);
+      const usuarioRepository = db.getRepository(Usuario);
 
       const usuarioExistente = await usuarioRepository.findOne({
         where: { email },
@@ -45,6 +47,7 @@ export class UsuarioController {
         email,
         senha: senhaHash,
         telefone,
+        endereco: endereco || null,
         tipo_usuario,
         cidade_id: cidade_id || null,
       });
@@ -67,9 +70,9 @@ export class UsuarioController {
 
   async getAll(req: Request, res: Response): Promise<Response> {
     try {
-      const usuarioRepository = AppDataSource.getRepository(Usuario);
+      const usuarioRepository = db.getRepository(Usuario);
       const usuarios = await usuarioRepository.find({
-        select: ["id", "nome", "email", "telefone", "tipo_usuario", "cidade_id", "criado_em"],
+        select: ["id", "nome", "email", "telefone", "endereco", "tipo_usuario", "cidade_id", "criado_em"],
       });
 
       return res.status(200).json({
@@ -87,10 +90,10 @@ export class UsuarioController {
     try {
       const { id } = req.params;
 
-      const usuarioRepository = AppDataSource.getRepository(Usuario);
+      const usuarioRepository = db.getRepository(Usuario);
       const usuario = await usuarioRepository.findOne({
         where: { id: Number(id) },
-        select: ["id", "nome", "email", "telefone", "tipo_usuario", "cidade_id", "criado_em"],
+        select: ["id", "nome", "email", "telefone", "endereco", "tipo_usuario", "cidade_id", "criado_em"],
       });
 
       if (!usuario) {
@@ -111,9 +114,9 @@ export class UsuarioController {
   async update(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
-      const { nome, telefone, tipo_usuario, cidade_id, senha } = req.body;
+      const { nome, telefone, endereco, tipo_usuario, cidade_id, senha } = req.body;
 
-      const usuarioRepository = AppDataSource.getRepository(Usuario);
+      const usuarioRepository = db.getRepository(Usuario);
       const usuario = await usuarioRepository.findOne({
         where: { id: Number(id) },
       });
@@ -134,6 +137,7 @@ export class UsuarioController {
       // Atualizar campos
       if (nome) usuario.nome = nome;
       if (telefone) usuario.telefone = telefone;
+      if (endereco !== undefined) usuario.endereco = endereco || null;
       if (tipo_usuario === TipoUsuario.ADMINISTRADOR) {
         return res.status(403).json({
           message: "Não é permitido promover usuário para administrador por esta rota",
@@ -159,3 +163,4 @@ export class UsuarioController {
     }
   }
 }
+

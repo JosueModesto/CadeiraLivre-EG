@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Agendamentos from "./pages/Agendamentos";
 import NovoAgendamento from "./pages/NovoAgendamento";
+import SelecionarBarbeariaAgendamento from "./pages/SelecionarBarbeariaAgendamento";
 import Barbearia from "./pages/Barbearia";
 import BarbeariaAgendamentos from "./pages/BarbeariaAgendamentos";
 
@@ -32,6 +33,14 @@ export default function App() {
           />
           <Route
             path="/novo-agendamento"
+            element={
+              <ProtectedRoute>
+                <SelecionarBarbeariaAgendamento />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/novo-agendamento/barbearia/:barbeariaId"
             element={
               <ProtectedRoute>
                 <NovoAgendamento />

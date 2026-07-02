@@ -1,5 +1,5 @@
 import { Between, In, Repository } from "typeorm";
-import { AppDataSource } from "../data-source";
+import { DatabaseSingleton } from "../padrao/singleton";
 import { Agendamento, StatusAgendamento } from "../entities/Agendamento";
 import { AgendamentoItem } from "../entities/AgendamentoItem";
 import { Barbearia } from "../entities/Barbearia";
@@ -12,6 +12,8 @@ import {
   Janela,
 } from "./AgendamentoDisponibilidadeService";
 
+const db = DatabaseSingleton.getInstance();
+
 export interface CriarAgendamentoInput {
   cliente_id: number;
   barbearia_id: number;
@@ -23,13 +25,13 @@ export interface CriarAgendamentoInput {
 export class AgendamentoService {
   constructor(
     private readonly disponibilidade: AgendamentoDisponibilidadeService = new AgendamentoDisponibilidadeService(),
-    private readonly agendamentoRepo: Repository<Agendamento> = AppDataSource.getRepository(Agendamento),
-    private readonly agendamentoItemRepo: Repository<AgendamentoItem> = AppDataSource.getRepository(AgendamentoItem),
-    private readonly barbeariaRepo: Repository<Barbearia> = AppDataSource.getRepository(Barbearia),
-    private readonly funcionamentoRepo: Repository<BarbeariaFuncionamento> = AppDataSource.getRepository(BarbeariaFuncionamento),
-    private readonly servicoRepo: Repository<BarbeariaServico> = AppDataSource.getRepository(BarbeariaServico),
-    private readonly barbeiroRepo: Repository<Barbeiro> = AppDataSource.getRepository(Barbeiro),
-    private readonly barbeiroDisponibilidadeRepo: Repository<BarbeiroDisponibilidade> = AppDataSource.getRepository(BarbeiroDisponibilidade)
+    private readonly agendamentoRepo: Repository<Agendamento> = db.getRepository(Agendamento),
+    private readonly agendamentoItemRepo: Repository<AgendamentoItem> = db.getRepository(AgendamentoItem),
+    private readonly barbeariaRepo: Repository<Barbearia> = db.getRepository(Barbearia),
+    private readonly funcionamentoRepo: Repository<BarbeariaFuncionamento> = db.getRepository(BarbeariaFuncionamento),
+    private readonly servicoRepo: Repository<BarbeariaServico> = db.getRepository(BarbeariaServico),
+    private readonly barbeiroRepo: Repository<Barbeiro> = db.getRepository(Barbeiro),
+    private readonly barbeiroDisponibilidadeRepo: Repository<BarbeiroDisponibilidade> = db.getRepository(BarbeiroDisponibilidade)
   ) {}
 
   private obterMinutos(hora: string): number {
@@ -127,7 +129,7 @@ export class AgendamentoService {
       return { erro: "Barbeiro não encontrado nesta barbearia", status: 404 } as const;
     }
 
-    const servicos = await this.servicoRepo.findBy({ id: In(servico_ids), barbearia_id } as any);
+    const servicos = await this.servicoRepo.findBy({ id: In(servico_ids), barbearia_id, ativo: true } as any);
     if (servicos.length !== servico_ids.length) {
       return { erro: "Um ou mais serviços são inválidos para esta barbearia", status: 400 } as const;
     }
@@ -177,6 +179,52 @@ export class AgendamentoService {
     });
 
     return { agendamento: agendamentoCompleto, status: 201 } as const;
+  }
+
+  async cancelarAgendamento(agendamentoId: number, clienteId: number) {
+    const agendamento = await this.agendamentoRepo.findOne({
+      where: { id: agendamentoId, cliente_id: clienteId },
+    });
+
+    if (!agendamento) {
+      return { erro: "Agendamento não encontrado", status: 404 } as const;
+    }
+
+    if (agendamento.status === StatusAgendamento.CANCELADO) {
+      return { erro: "Este agendamento já foi cancelado", status: 400 } as const;
+    }
+
+    if (agendamento.status !== StatusAgendamento.AGENDADO) {
+      return { erro: "Este agendamento não pode ser cancelado", status: 400 } as const;
+    }
+
+    agendamento.status = StatusAgendamento.CANCELADO;
+    const atualizado = await this.agendamentoRepo.save(agendamento);
+
+    return { agendamento: atualizado, status: 200 } as const;
+  }
+
+  async cancelarAgendamentoPorBarbearia(agendamentoId: number, barbeariaId: number) {
+    const agendamento = await this.agendamentoRepo.findOne({
+      where: { id: agendamentoId, barbearia_id: barbeariaId },
+    });
+
+    if (!agendamento) {
+      return { erro: "Agendamento não encontrado", status: 404 } as const;
+    }
+
+    if (agendamento.status === StatusAgendamento.CANCELADO) {
+      return { erro: "Este agendamento já foi cancelado", status: 400 } as const;
+    }
+
+    if (agendamento.status !== StatusAgendamento.AGENDADO) {
+      return { erro: "Este agendamento não pode ser cancelado", status: 400 } as const;
+    }
+
+    agendamento.status = StatusAgendamento.CANCELADO;
+    const atualizado = await this.agendamentoRepo.save(agendamento);
+
+    return { agendamento: atualizado, status: 200 } as const;
   }
 
   async getSlotsDisponiveis(barbearia_id: number, barbeiro_id: number, data: string) {

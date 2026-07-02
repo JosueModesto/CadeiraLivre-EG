@@ -1,7 +1,7 @@
-import express, { Router } from "express";
+﻿import express, { Router } from "express";
 import swaggerUi from "swagger-ui-express";
 import cors from "cors";
-import { AppDataSource } from "./data-source";
+import { DatabaseSingleton } from "./padrao/singleton";
 import { runSeed } from "./seed";
 import { swaggerDocs } from "./swagger";
 import authRoutes from "./routes/auth.routes";
@@ -11,6 +11,8 @@ import barbeiroRoutes from "./routes/barbeiro.routes";
 import servicoRoutes from "./routes/servico.routes";
 import barbeariaRoutes from "./routes/barbearia.routes";
 import agendamentoRoutes from "./routes/agendamento.routes";
+
+const db = DatabaseSingleton.getInstance();
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -44,13 +46,13 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 app.use("/api", apiRoutes);
 
 async function bootstrap() {
-  while (!AppDataSource.isInitialized) {
+  while (!db.isInitialized) {
     try {
-      await AppDataSource.initialize();
-      console.log("✓ TypeORM conectado ao PostgreSQL");
+      await db.initialize();
+      console.log("TypeORM conectado ao PostgreSQL");
     } catch (error) {
       const err = error as Error;
-      console.error(`✗ Erro ao conectar ao banco: ${err.message}`);
+      console.error(`Erro ao conectar ao banco: ${err.message}`);
       console.log(`  Tentando novamente em ${dbRetryDelayMs}ms...`);
       await new Promise((resolve) => setTimeout(resolve, dbRetryDelayMs));
     }
@@ -60,14 +62,15 @@ async function bootstrap() {
     await runSeed();
   } catch (error) {
     const err = error as Error;
-    console.error(`✗ Erro ao executar seed: ${err.message}`);
+    console.error(`Erro ao executar seed: ${err.message}`);
   }
   
 
   app.listen(port, () => {
-    console.log(`\n🎉 Backend rodando em http://localhost:${publicPort}`);
-    console.log(`📚 Documentação Swagger: http://localhost:${publicPort}/api-docs\n`);
+    console.log(`\nBackend rodando em http://localhost:${publicPort}`);
+    console.log(`Documentação Swagger: http://localhost:${publicPort}/api-docs\n`);
   });
 }
 
 bootstrap();
+
