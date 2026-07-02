@@ -1,477 +1,438 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { authService } from "../services/api";
+import { cidadeService } from "../services/cidadeService";
+import { barbeariaService } from "../services/barbeariaService";
+
+const clienteInicial = { nome: "", telefone: "", email: "", senha: "", cidade_id: "" };
+const barbeariaInicial = {
+  nome: "",
+  telefone: "",
+  email: "",
+  senha: "",
+  cidade_id: "",
+  nome_comercial: "",
+  telefone_comercial: "",
+  endereco: "",
+  descricao: "",
+};
 
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [userType, setUserType] = useState("client");
-  const [email, setEmail] = useState("");
-  const [senha, setSenha] = useState("");
+  const [mode, setMode] = useState("login"); // "login" | "register"
+  const [tipoUsuario, setTipoUsuario] = useState("cliente"); // "cliente" | "barbearia"
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e) => {
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+
+  const [cliente, setCliente] = useState(clienteInicial);
+  const [barbearia, setBarbearia] = useState(barbeariaInicial);
+  const [cidades, setCidades] = useState([]);
+  const [carregandoCidades, setCarregandoCidades] = useState(true);
+  const [erroCidades, setErroCidades] = useState("");
+
+  useEffect(() => {
+    let ativo = true;
+
+    const carregarCidades = async (tentativa = 1) => {
+      try {
+        const res = await cidadeService.getAll();
+        if (!ativo) return;
+
+        const lista = Array.isArray(res?.cidades) ? res.cidades : [];
+        setCidades(lista);
+        setErroCidades("");
+      } catch {
+        if (!ativo) return;
+
+        if (tentativa < 2) {
+          setTimeout(() => {
+            carregarCidades(tentativa + 1);
+          }, 800);
+          return;
+        }
+
+        setErroCidades("Não foi possível carregar as cidades agora.");
+      } finally {
+        if (ativo) {
+          setCarregandoCidades(false);
+        }
+      }
+    };
+
+    carregarCidades();
+
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  function selecionarTipo(tipo) {
+    setTipoUsuario(tipo);
+    setError("");
+  }
+
+  function abrirCadastro() {
+    setMode("register");
+    setError("");
+    setShowPassword(false);
+  }
+
+  function voltarLogin() {
+    setMode("login");
+    setError("");
+    setShowPassword(false);
+  }
+
+  async function handleLogin(e) {
     e.preventDefault();
     setError("");
+    if (!email || !senha) {
+      setError("Informe e-mail e senha.");
+      return;
+    }
     setLoading(true);
-
     try {
-      if (!email || !senha) {
-        setError("Email e senha são obrigatórios");
-        setLoading(false);
-        return;
-      }
-
       await login(email, senha);
       navigate("/dashboard");
     } catch (err) {
-      const message = err.response?.data?.message || "Erro ao fazer login";
-      setError(message);
+      setError(err.response?.data?.message || "Não foi possível entrar. Verifique suas credenciais.");
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const toggleProfile = (type) => {
-    setUserType(type);
-  };
+  async function handleCadastroCliente(e) {
+    e.preventDefault();
+    setError("");
 
-  const styles = {
-    container: {
-      background: "#121212",
-      color: "#eae1d4",
-      overflow: "hidden",
-    },
-    glassCard: {
-      background: "rgba(30, 30, 30, 0.8)",
-      backdropFilter: "blur(20px)",
-      border: "1px solid rgba(212, 175, 55, 0.15)",
-      boxShadow: "0 0 40px rgba(0, 0, 0, 0.5)",
-    },
-    goldGlow: {
-      boxShadow: "0 0 15px rgba(212, 175, 55, 0.3)",
-    },
-    bgMesh: {
-      backgroundImage: "radial-gradient(circle at 50% -20%, #2a220a 0%, #121212 70%)",
-    },
-    particleOverlay: {
-      backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuA5kPK5K0r8FrYW-JxvZOaRt5v4I586PWF6tnd1WDLKzKZCY-1OiwleXPTIXo02oVrRxxcGerOq3rqeS6JXhxdlZhhFKshhBM-CbJZpPwkkWHoTEQtrwSglPN2Qx8v-U8thJYXlw2BgsZZvmlIrky8e-x6ByyLoF2UJjx1D45HRToYowjrEtv9qSASipeLUz9QAs8_hC2tf53vS3Xuw5dQfCCMC4nNq7gumAQ_Fh-El2Uiqt8U7N0e4JNayMCm8B-cFA8xTvy2VBziJ')",
-    },
-    primaryButton: {
-      background: "#f2ca50",
-      color: "#3c2f00",
-      border: "none",
-      padding: "16px 24px",
-      borderRadius: "8px",
-      fontSize: "14px",
-      fontWeight: "600",
-      cursor: "pointer",
-      textTransform: "uppercase",
-      letterSpacing: "0.12em",
-      transition: "all 0.4s ease",
-      boxShadow: "0 0 15px rgba(212, 175, 55, 0.3)",
-    },
-    secondaryButton: {
-      background: "transparent",
-      color: "#d0c5af",
-      border: "1px solid rgba(78, 70, 53, 0.3)",
-      padding: "12px 16px",
-      borderRadius: "8px",
-      fontSize: "12px",
-      fontWeight: "600",
-      cursor: "pointer",
-      transition: "all 0.3s ease",
-    },
+    if (!cliente.nome || !cliente.telefone || !cliente.email || !cliente.senha) {
+      setError("Preencha nome, telefone, e-mail e senha.");
+      return;
+    }
+    if (cliente.senha.length < 6) {
+      setError("A senha deve ter no mínimo 6 caracteres.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await authService.register({
+        nome: cliente.nome,
+        telefone: cliente.telefone,
+        email: cliente.email,
+        senha: cliente.senha,
+        tipo_usuario: "cliente",
+        cidade_id: cliente.cidade_id ? Number(cliente.cidade_id) : null,
+      });
+      await login(cliente.email, cliente.senha);
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err.response?.data?.message || "Não foi possível concluir o cadastro.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleCadastroBarbearia(e) {
+    e.preventDefault();
+    setError("");
+
+    const obrigatorios = [
+      barbearia.nome,
+      barbearia.telefone,
+      barbearia.email,
+      barbearia.senha,
+      barbearia.nome_comercial,
+      barbearia.endereco,
+      barbearia.cidade_id,
+    ];
+    if (obrigatorios.some((v) => !v)) {
+      setError("Preencha todos os campos obrigatórios da conta e da barbearia.");
+      return;
+    }
+    if (barbearia.senha.length < 6) {
+      setError("A senha deve ter no mínimo 6 caracteres.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const cidadeId = Number(barbearia.cidade_id);
+
+      // 1) Cria o usuário dono
+      const usuario = await authService.register({
+        nome: barbearia.nome,
+        telefone: barbearia.telefone,
+        email: barbearia.email,
+        senha: barbearia.senha,
+        tipo_usuario: "barbearia",
+        cidade_id: cidadeId,
+      });
+
+      // 2) Cria a barbearia já linkada ao usuário
+      await barbeariaService.create({
+        usuario_id: usuario.id,
+        nome_comercial: barbearia.nome_comercial,
+        telefone_comercial: barbearia.telefone_comercial || null,
+        endereco: barbearia.endereco,
+        cidade_id: cidadeId,
+        descricao: barbearia.descricao || "",
+      });
+
+      // 3) Autentica e segue para escolher os serviços
+      await login(barbearia.email, barbearia.senha);
+      navigate("/barbearia");
+    } catch (err) {
+      setError(err.response?.data?.message || "Não foi possível concluir o cadastro da barbearia.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const atualizarCliente = (campo, valor) => {
+    setCliente((c) => ({ ...c, [campo]: valor }));
+    setError("");
+  };
+  const atualizarBarbearia = (campo, valor) => {
+    setBarbearia((c) => ({ ...c, [campo]: valor }));
+    setError("");
   };
 
   return (
-    <div
-      style={{
-        ...styles.container,
-        ...styles.bgMesh,
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontFamily: 'Inter, sans-serif',
-        fontSize: "16px",
-        padding: "20px",
-      }}
-    >
-      {/* Atmospheric Particles */}
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          pointerEvents: "none",
-          opacity: 0.2,
-          ...styles.particleOverlay,
-        }}
-      />
-
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
-        
-        * {
-          box-sizing: border-box;
-        }
-        
-        .headline-lg {
-          font-family: Montserrat;
-          font-size: 32px;
-          line-height: 40px;
-          letter-spacing: -0.01em;
-          font-weight: 600;
-        }
-        
-        .body-lg {
-          font-family: Inter;
-          font-size: 18px;
-          line-height: 28px;
-          font-weight: 400;
-        }
-        
-        .label-md {
-          font-family: Inter;
-          font-size: 14px;
-          line-height: 20px;
-          letter-spacing: 0.05em;
-          font-weight: 500;
-        }
-        
-        .label-sm {
-          font-family: Inter;
-          font-size: 12px;
-          line-height: 16px;
-          letter-spacing: 0.08em;
-          font-weight: 600;
-        }
-        
-        .headline-md {
-          font-family: Montserrat;
-          font-size: 24px;
-          line-height: 32px;
-          font-weight: 600;
-        }
-        
-        .animate-fade-in {
-          animation: fadeIn 0.8s ease-out;
-        }
-        
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        .gold-glow-hover:hover {
-          box-shadow: 0 0 25px rgba(212, 175, 55, 0.5);
-        }
-        
-        .transition-all {
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        input {
-          font-family: Inter;
-        }
-        
-        button {
-          font-family: Inter;
-        }
-      `}</style>
-
-      <main
-        style={{
-          width: "100%",
-          maxWidth: "1280px",
-          display: "flex",
-          flexDirection: window.innerWidth < 768 ? "column" : "row",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "128px",
-          position: "relative",
-          zIndex: 10,
-        }}
-      >
-        {/* Left Side: Branding */}
-        <div
-          style={{
-            display: window.innerWidth >= 768 ? "flex" : "none",
-            flexDirection: "column",
-            alignItems: "flex-start",
-            maxWidth: "448px",
-            animation: "fadeIn 0.8s ease-out",
-          }}
-          className="hidden md:flex animate-fade-in"
-        >
-          <h1
-            style={{
-              fontSize: "48px",
-              fontWeight: "700",
-              color: "#f2ca50",
-              textTransform: "uppercase",
-              letterSpacing: "0.12em",
-              marginBottom: "24px",
-            }}
-            className="headline-lg"
-          >
-            CADEIRA LIVRE
-          </h1>
-          <p
-            style={{
-              color: "#d0c5af",
-              lineHeight: "28px",
-              marginBottom: "64px",
-            }}
-            className="body-lg"
-          >
-            Redefinindo a experiência do homem moderno. Reserve seu lugar na excelência e sinta o prestígio de um atendimento exclusivo.
-          </p>
-          <div style={{ display: "flex", gap: "24px", marginTop: "64px" }}>
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <span style={{ fontSize: "24px", fontWeight: "600", color: "#f2ca50" }} className="headline-md">
-                +500
-              </span>
-              <span style={{ fontSize: "12px", color: "#d0c5af", textTransform: "uppercase" }} className="label-sm">
-                Barbearias Elite
-              </span>
-            </div>
-            <div style={{ width: "1px", height: "48px", background: "rgba(242, 202, 80, 0.2)" }} />
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <span style={{ fontSize: "24px", fontWeight: "600", color: "#f2ca50" }} className="headline-md">
-                15k
-              </span>
-              <span style={{ fontSize: "12px", color: "#d0c5af", textTransform: "uppercase" }} className="label-sm">
-                Membros Ativos
-              </span>
-            </div>
+    <div className="app-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
+      <div className="fade-in" style={{ width: "100%", maxWidth: "460px" }}>
+        <div className="center" style={{ marginBottom: "24px" }}>
+          <div className="brand" style={{ justifyContent: "center", fontSize: "1.7rem" }}>
+            <span className="scissors">✂</span> Cadeira Livre
           </div>
+          <p className="muted mt-2" style={{ fontSize: "0.92rem" }}>Agende seu horário na barbearia.</p>
         </div>
 
-        {/* Right Side: Login Card */}
-        <div
-          style={{
-            width: "100%",
-            maxWidth: "480px",
-            ...styles.glassCard,
-            borderRadius: "12px",
-            padding: "32px",
-          }}
-        >
-          {/* Mobile Logo */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "32px" }} className="md:hidden">
-            <h1 style={{ fontSize: "24px", fontWeight: "600", color: "#f2ca50", textTransform: "uppercase" }} className="headline-md">
-              CADEIRA LIVRE
-            </h1>
-          </div>
-
-          {/* Profile Selector */}
-          <div style={{ marginBottom: "32px" }}>
-            <label style={{ fontSize: "12px", color: "#d0c5af", textTransform: "uppercase", display: "block", marginBottom: "12px", textAlign: "center" }} className="label-sm">
-              Selecione seu acesso
-            </label>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "4px",
-                padding: "4px",
-                background: "rgba(35, 31, 23, 0.5)",
-                borderRadius: "8px",
-                border: "1px solid rgba(212, 175, 55, 0.05)",
-              }}
-            >
-              <button
-                onClick={() => toggleProfile("client")}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px",
-                  padding: "12px",
-                  borderRadius: "6px",
-                  ...styles.transition,
-                  fontSize: "12px",
-                  fontWeight: "600",
-                  textTransform: "uppercase",
-                  border: "none",
-                  cursor: "pointer",
-                  background: userType === "client" ? "#f2ca50" : "transparent",
-                  color: userType === "client" ? "#3c2f00" : "#d0c5af",
-                  boxShadow: userType === "client" ? "0 0 15px rgba(212, 175, 55, 0.3)" : "none",
-                }}
-                className="label-md"
-              >
-                👤 CLIENTE
-              </button>
-              <button
-                onClick={() => toggleProfile("shop")}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px",
-                  padding: "12px",
-                  borderRadius: "6px",
-                  ...styles.transition,
-                  fontSize: "12px",
-                  fontWeight: "600",
-                  textTransform: "uppercase",
-                  border: "none",
-                  cursor: "pointer",
-                  background: userType === "shop" ? "#f2ca50" : "transparent",
-                  color: userType === "shop" ? "#3c2f00" : "#d0c5af",
-                  boxShadow: userType === "shop" ? "0 0 15px rgba(212, 175, 55, 0.3)" : "none",
-                }}
-                className="label-md"
-              >
-                ✂️ BARBEARIA
-              </button>
-            </div>
-          </div>
-
-          <h2 style={{ fontSize: "24px", fontWeight: "600", color: "#eae1d4", marginBottom: "8px" }} className="headline-md">
-            {userType === "client" ? "Bem-vindo de volta" : "Painel da Barbearia"}
-          </h2>
-          <p style={{ fontSize: "16px", color: "#d0c5af", marginBottom: "24px" }} className="body-md">
-            Insira suas credenciais para acessar o lounge.
-          </p>
-
-          {/* Error */}
-          {error && (
-            <div style={{ marginBottom: "16px", padding: "12px", background: "rgba(255, 180, 171, 0.2)", border: "1px solid rgba(255, 107, 107, 0.5)", borderRadius: "8px", color: "#ffb4ab", fontSize: "12px" }}>
-              {error}
-            </div>
-          )}
-
-          {/* Form */}
-          <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-            {/* Email */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              <label style={{ fontSize: "12px", color: "#d0c5af", textTransform: "uppercase" }} className="label-sm">
-                E-mail
-              </label>
-              <div style={{ position: "relative" }}>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="nome@exemplo.com"
-                  style={{
-                    width: "100%",
-                    background: "#110e07",
-                    borderBottom: "1px solid rgba(78, 70, 53, 0.3)",
-                    padding: "16px 48px 16px 16px",
-                    color: "#eae1d4",
-                    fontSize: "16px",
-                    outline: "none",
-                    borderRadius: "8px 8px 0 0",
-                    transition: "all 0.3s ease",
-                  }}
-                  onFocus={(e) => (e.target.style.borderBottom = "1px solid #f2ca50")}
-                  onBlur={(e) => (e.target.style.borderBottom = "1px solid rgba(78, 70, 53, 0.3)")}
-                />
-              </div>
-            </div>
-
-            {/* Password */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <label style={{ fontSize: "12px", color: "#d0c5af", textTransform: "uppercase" }} className="label-sm">
-                  Senha
-                </label>
-                <a href="#" style={{ fontSize: "12px", color: "#f2ca50", textDecoration: "none", cursor: "pointer" }}>
-                  Esqueceu a senha?
-                </a>
-              </div>
-              <div style={{ position: "relative" }}>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={senha}
-                  onChange={(e) => setSenha(e.target.value)}
-                  placeholder="••••••••"
-                  style={{
-                    width: "100%",
-                    background: "#110e07",
-                    borderBottom: "1px solid rgba(78, 70, 53, 0.3)",
-                    padding: "16px 48px 16px 16px",
-                    color: "#eae1d4",
-                    fontSize: "16px",
-                    outline: "none",
-                    borderRadius: "8px 8px 0 0",
-                    transition: "all 0.3s ease",
-                  }}
-                  onFocus={(e) => (e.target.style.borderBottom = "1px solid #f2ca50")}
-                  onBlur={(e) => (e.target.style.borderBottom = "1px solid rgba(78, 70, 53, 0.3)")}
-                />
+        <div className="card">
+          {mode === "register" ? (
+            <div className="field" style={{ marginBottom: "20px" }}>
+              <span className="field-label">Você é</span>
+              <div className="row" style={{ gap: "8px" }}>
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{
-                    position: "absolute",
-                    right: "16px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "#d0c5af",
-                    fontSize: "18px",
-                  }}
+                  className={tipoUsuario === "cliente" ? "btn btn--primary btn--block" : "btn btn--ghost btn--block"}
+                  onClick={() => selecionarTipo("cliente")}
                 >
-                  {showPassword ? "👁️" : "🙈"}
+                  Cliente
+                </button>
+                <button
+                  type="button"
+                  className={tipoUsuario === "barbearia" ? "btn btn--primary btn--block" : "btn btn--ghost btn--block"}
+                  onClick={() => selecionarTipo("barbearia")}
+                >
+                  Barbearia
                 </button>
               </div>
             </div>
+          ) : null}
 
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                marginTop: "8px",
-                ...styles.primaryButton,
-                opacity: loading ? 0.6 : 1,
-                cursor: loading ? "not-allowed" : "pointer",
-              }}
-              className="gold-glow-hover"
-              onMouseOver={(e) => !loading && (e.target.style.boxShadow = "0 0 25px rgba(212, 175, 55, 0.5)")}
-              onMouseOut={(e) => !loading && (e.target.style.boxShadow = "0 0 15px rgba(212, 175, 55, 0.3)")}
-            >
-              {loading ? "Conectando..." : "Acessar Lounge"}
-            </button>
-          </form>
+          {mode === "login" ? (
+            <form onSubmit={handleLogin} className="stack stack-5">
+              <div className="field">
+                <label htmlFor="email">
+                  E-mail <span style={requiredMarkStyle}>*</span>
+                </label>
+                <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@exemplo.com" autoComplete="email" />
+              </div>
+              <div className="field">
+                <label htmlFor="senha">
+                  Senha <span style={requiredMarkStyle}>*</span>
+                </label>
+                <div style={{ position: "relative" }}>
+                  <input
+                    id="senha"
+                    type={showPassword ? "text" : "password"}
+                    value={senha}
+                    onChange={(e) => setSenha(e.target.value)}
+                    placeholder="Sua senha"
+                    autoComplete="current-password"
+                    style={{ paddingRight: "84px" }}
+                  />
+                  <button type="button" onClick={() => setShowPassword((v) => !v)} style={senhaToggleStyle}>
+                    {showPassword ? "Ocultar" : "Mostrar"}
+                  </button>
+                </div>
+              </div>
 
-          {/* Sign Up */}
-          <p style={{ marginTop: "32px", textAlign: "center", fontSize: "14px", color: "#d0c5af" }} className="body-md">
-            Não possui conta?{" "}
-            <a href="#" style={{ color: "#f2ca50", fontWeight: "bold", textDecoration: "none", cursor: "pointer" }}>
-              Solicite convite
-            </a>
-          </p>
+              {error ? <div className="alert alert--error">{error}</div> : null}
+
+              <button type="submit" className="btn btn--primary btn--block" disabled={loading}>
+                {loading ? "Entrando..." : "Entrar"}
+              </button>
+            </form>
+          ) : tipoUsuario === "cliente" ? (
+            <form onSubmit={handleCadastroCliente} className="stack stack-4">
+              <div className="section-label">Dados do cliente</div>
+              <Campo label="Nome completo" required value={cliente.nome} onChange={(v) => atualizarCliente("nome", v)} placeholder="Seu nome" />
+              <Campo label="Telefone" required type="tel" value={cliente.telefone} onChange={(v) => atualizarCliente("telefone", v)} placeholder="(44) 99999-0000" />
+              <Campo label="E-mail" required type="email" value={cliente.email} onChange={(v) => atualizarCliente("email", v)} placeholder="voce@exemplo.com" />
+              <CampoSenha label="Senha" required value={cliente.senha} onChange={(v) => atualizarCliente("senha", v)} show={showPassword} toggle={() => setShowPassword((s) => !s)} />
+              <SelectCidade
+                value={cliente.cidade_id}
+                onChange={(v) => atualizarCliente("cidade_id", v)}
+                cidades={cidades}
+                opcional
+                carregando={carregandoCidades}
+              />
+              {erroCidades ? <div className="alert alert--error">{erroCidades}</div> : null}
+
+              {error ? <div className="alert alert--error">{error}</div> : null}
+
+              <button type="submit" className="btn btn--primary btn--block mt-2" disabled={loading}>
+                {loading ? "Criando conta..." : "Criar conta de cliente"}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleCadastroBarbearia} className="stack stack-4">
+              <div className="section-label">Dados de acesso</div>
+              <Campo label="Nome do responsável" required value={barbearia.nome} onChange={(v) => atualizarBarbearia("nome", v)} placeholder="Seu nome" />
+              <Campo label="Telefone pessoal" required type="tel" value={barbearia.telefone} onChange={(v) => atualizarBarbearia("telefone", v)} placeholder="(44) 99999-0000" />
+              <Campo label="E-mail" required type="email" value={barbearia.email} onChange={(v) => atualizarBarbearia("email", v)} placeholder="voce@exemplo.com" />
+              <CampoSenha label="Senha" required value={barbearia.senha} onChange={(v) => atualizarBarbearia("senha", v)} show={showPassword} toggle={() => setShowPassword((s) => !s)} />
+
+              <div className="section-label mt-2">Dados da barbearia</div>
+              <Campo label="Nome comercial" required value={barbearia.nome_comercial} onChange={(v) => atualizarBarbearia("nome_comercial", v)} placeholder="Ex.: Barbearia Central" />
+              <Campo label="Telefone comercial" optional type="tel" value={barbearia.telefone_comercial} onChange={(v) => atualizarBarbearia("telefone_comercial", v)} placeholder="(44) 3020-0000" />
+              <Campo label="Endereço" required value={barbearia.endereco} onChange={(v) => atualizarBarbearia("endereco", v)} placeholder="Rua, número - bairro" />
+              <SelectCidade
+                required
+                value={barbearia.cidade_id}
+                onChange={(v) => atualizarBarbearia("cidade_id", v)}
+                cidades={cidades}
+                carregando={carregandoCidades}
+              />
+              {erroCidades ? <div className="alert alert--error">{erroCidades}</div> : null}
+              <div className="field">
+                <label>Descrição (opcional)</label>
+                <input type="text" value={barbearia.descricao} onChange={(e) => atualizarBarbearia("descricao", e.target.value)} placeholder="Cortes clássicos e modernos" />
+              </div>
+
+              {error ? <div className="alert alert--error">{error}</div> : null}
+
+              <button type="submit" className="btn btn--primary btn--block mt-2" disabled={loading}>
+                {loading ? "Criando barbearia..." : "Criar conta de barbearia"}
+              </button>
+            </form>
+          )}
         </div>
-      </main>
 
-      {/* Bottom accent */}
-      <div
-        style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          width: "100%",
-          height: "4px",
-          background: "linear-gradient(to right, transparent, rgba(242, 202, 80, 0.4), transparent)",
-        }}
-      />
+        <p className="center muted mt-6" style={{ fontSize: "0.85rem" }}>
+          {mode === "login" ? (
+            <>
+              Ainda não tem conta?{" "}
+              <button type="button" onClick={abrirCadastro} style={linkStyle}>
+                Criar conta
+              </button>
+            </>
+          ) : (
+            <>
+              Já tem conta?{" "}
+              <button type="button" onClick={voltarLogin} style={linkStyle}>
+                Entrar
+              </button>
+            </>
+          )}
+        </p>
+      </div>
     </div>
   );
 }
+
+/* -------------------------------------------------------- Subcomponentes -- */
+
+function Campo({ label, value, onChange, placeholder, type = "text", required = false, optional = false }) {
+  return (
+    <div className="field">
+      <label>
+        {label}
+        {required ? <span style={requiredMarkStyle}>*</span> : null}
+        {optional ? " (opcional)" : ""}
+      </label>
+      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
+    </div>
+  );
+}
+
+function CampoSenha({ label, value, onChange, show, toggle, required = false }) {
+  return (
+    <div className="field">
+      <label>
+        {label}
+        {required ? <span style={requiredMarkStyle}>*</span> : null}
+      </label>
+      <div style={{ position: "relative" }}>
+        <input
+          type={show ? "text" : "password"}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Mínimo 6 caracteres"
+          style={{ paddingRight: "84px" }}
+        />
+        <button type="button" onClick={toggle} style={senhaToggleStyle}>
+          {show ? "Ocultar" : "Mostrar"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function SelectCidade({ value, onChange, cidades, opcional = false, required = false, carregando = false }) {
+  return (
+    <div className="field">
+      <label>
+        Cidade
+        {required ? <span style={requiredMarkStyle}>*</span> : null}
+        {opcional ? " (opcional)" : ""}
+      </label>
+      <select value={value} onChange={(e) => onChange(e.target.value)}>
+        <option value="">{carregando ? "Carregando cidades..." : "Selecione"}</option>
+        {cidades.map((cidade) => (
+          <option key={cidade.id} value={cidade.id}>
+            {cidade.nome} - {cidade.estado}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+const senhaToggleStyle = {
+  position: "absolute",
+  right: "10px",
+  top: "50%",
+  transform: "translateY(-50%)",
+  background: "none",
+  border: "none",
+  cursor: "pointer",
+  fontSize: "0.8rem",
+  fontWeight: 600,
+  color: "var(--gold-deep)",
+};
+
+const requiredMarkStyle = {
+  color: "#d32f2f",
+  marginLeft: "4px",
+  fontWeight: 700,
+};
+
+const linkStyle = {
+  background: "none",
+  border: "none",
+  padding: 0,
+  cursor: "pointer",
+  color: "var(--gold-deep)",
+  fontWeight: 700,
+  fontSize: "0.85rem",
+  fontFamily: "inherit",
+};

@@ -15,6 +15,7 @@ import { Cidade } from "./Cidade";
 export enum TipoUsuario {
   CLIENTE = "cliente",
   BARBEARIA = "barbearia",
+  ADMINISTRADOR = "administrador",
 }
 
 @Entity("usuarios")

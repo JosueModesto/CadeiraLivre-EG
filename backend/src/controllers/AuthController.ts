@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { AppDataSource } from "../data-source";
-import { Usuario } from "../entities/Usuario";
+import { TipoUsuario, Usuario } from "../entities/Usuario";
 
 const JWT_SECRET = process.env.JWT_SECRET || "chave_secreta_barbearia_123";
 
@@ -20,6 +20,13 @@ export class AuthController {
       if (senha.length < 6) {
         return res.status(400).json({
           message: "Senha deve ter no mínimo 6 caracteres",
+        });
+      }
+
+      const tiposPermitidosCadastro = [TipoUsuario.CLIENTE, TipoUsuario.BARBEARIA];
+      if (!tiposPermitidosCadastro.includes(tipo_usuario)) {
+        return res.status(403).json({
+          message: "Tipo de usuário inválido para cadastro público",
         });
       }
 

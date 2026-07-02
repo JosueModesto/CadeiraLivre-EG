@@ -1,4 +1,4 @@
-export type TipoUsuarioModel = "cliente" | "barbearia";
+export type TipoUsuarioModel = "cliente" | "barbearia" | "administrador";
 
 export interface UsuarioModel {
   id: number;

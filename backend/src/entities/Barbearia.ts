@@ -29,8 +29,8 @@ export class Barbearia {
 	@Column({ type: "varchar", length: 100, nullable: false })
 	nome_comercial!: string;
 
-	@Column({ type: "varchar", length: 20, nullable: false })
-	telefone_comercial!: string;
+	@Column({ type: "varchar", length: 20, nullable: true })
+	telefone_comercial?: string | null;
 
 	@Column({ type: "varchar", length: 255, nullable: false })
 	endereco!: string;

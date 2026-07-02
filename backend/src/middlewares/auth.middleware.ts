@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { TipoUsuario } from "../entities/Usuario";
 
 const JWT_SECRET = process.env.JWT_SECRET || "chave_secreta_barbearia_123";
 
@@ -7,7 +8,7 @@ export interface AuthRequest extends Request {
   user?: {
     id: number;
     userId: number;
-    tipo_usuario: string;
+    tipo_usuario: TipoUsuario;
   };
 }
 
@@ -30,7 +31,7 @@ export function authenticateToken(
     const user = jwt.verify(token, JWT_SECRET) as {
       id: number;
       userId: number;
-      tipo_usuario: string;
+      tipo_usuario: TipoUsuario;
     };
     req.user = user;
     next();
@@ -39,4 +40,26 @@ export function authenticateToken(
       message: "Token inválido ou expirado",
     });
   }
+}
+
+export function requireAdmin(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): void {
+  if (!req.user) {
+    res.status(401).json({
+      message: "Usuário não autenticado",
+    });
+    return;
+  }
+
+  if (req.user.tipo_usuario !== TipoUsuario.ADMINISTRADOR) {
+    res.status(403).json({
+      message: "Acesso restrito ao administrador",
+    });
+    return;
+  }
+
+  next();
 }
