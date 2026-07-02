@@ -25,7 +25,7 @@ router.get("/:id/agendamentos/proximos", authenticateToken, (req, res) =>
 	agendamentoBarbeariaController.getProximosAgendamentos(req as any, res)
 );
 
-router.patch(":id/agendamentos/:agendamentoId/cancel", authenticateToken, (req, res) =>
+router.patch("/:id/agendamentos/:agendamentoId/cancel", authenticateToken, (req, res) =>
 	agendamentoBarbeariaController.cancelAgendamento(req as any, res)
 );
 

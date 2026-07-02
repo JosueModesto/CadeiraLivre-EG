@@ -135,9 +135,7 @@ export default function BarbeariaAgendamentos() {
       }
 
       try {
-        const response = await barbeariaService.getProximosAgendamentos(barbearia.id, {
-          data: dataAgenda,
-        });
+        const response = await barbeariaService.getProximosAgendamentos(barbearia.id);
         setProximosAgendamentos(response.agendamentos || []);
       } catch (err) {
         setError(err.response?.data?.message || "Erro ao carregar próximos agendamentos");
@@ -145,7 +143,7 @@ export default function BarbeariaAgendamentos() {
     }
 
     carregarProximos();
-  }, [barbearia, barbeiros, dataAgenda]);
+  }, [barbearia]);
 
   const agendaFiltrada = useMemo(() => {
     return agendaDia.filter((agendamento) => statusFiltro === "todos" || agendamento.status === statusFiltro);

@@ -1,7 +1,9 @@
 import { Request, Response } from "express";
-import { AppDataSource } from "../data-source";
+import { DatabaseSingleton } from "../padrao/singleton";
 import { Agendamento } from "../entities/Agendamento";
 import { AgendamentoService } from "../services/AgendamentoService";
+
+const db = DatabaseSingleton.getInstance();
 
 export class AgendamentoClienteController {
   constructor(private readonly agendamentoService: AgendamentoService = new AgendamentoService()) {}
@@ -48,7 +50,7 @@ export class AgendamentoClienteController {
         return res.status(401).json({ message: "Usuário não autenticado" });
       }
 
-      const agendamentoRepository = AppDataSource.getRepository(Agendamento);
+      const agendamentoRepository = db.getRepository(Agendamento);
       const agendamentos = await agendamentoRepository.find({
         where: { cliente_id: Number(cliente_id) },
         relations: ["barbearia", "barbeiro", "itens"],

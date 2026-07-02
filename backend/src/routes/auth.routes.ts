@@ -1,7 +1,6 @@
-import jwt from "jsonwebtoken";
+﻿import jwt from "jsonwebtoken";
 import { Router } from "express";
 import bcrypt from "bcryptjs";
-import { AppDataSource } from "../data-source";
 import { Usuario } from "../entities/Usuario";
 import { AuthController } from "../controllers/AuthController";
 
@@ -15,3 +14,4 @@ router.post("/register", (req, res) => authController.register(req, res));
 router.post("/login", (req, res) => authController.login(req, res));
 
 export default router;
+

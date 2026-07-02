@@ -1,7 +1,9 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
-import { AppDataSource } from "../data-source";
+import { DatabaseSingleton } from "../padrao/singleton";
 import { TipoUsuario, Usuario } from "../entities/Usuario";
+
+const db = DatabaseSingleton.getInstance();
 
 export class UsuarioController {
   async create(req: Request, res: Response): Promise<Response> {
@@ -26,7 +28,7 @@ export class UsuarioController {
         });
       }
 
-      const usuarioRepository = AppDataSource.getRepository(Usuario);
+      const usuarioRepository = db.getRepository(Usuario);
 
       const usuarioExistente = await usuarioRepository.findOne({
         where: { email },
@@ -68,7 +70,7 @@ export class UsuarioController {
 
   async getAll(req: Request, res: Response): Promise<Response> {
     try {
-      const usuarioRepository = AppDataSource.getRepository(Usuario);
+      const usuarioRepository = db.getRepository(Usuario);
       const usuarios = await usuarioRepository.find({
         select: ["id", "nome", "email", "telefone", "endereco", "tipo_usuario", "cidade_id", "criado_em"],
       });
@@ -88,7 +90,7 @@ export class UsuarioController {
     try {
       const { id } = req.params;
 
-      const usuarioRepository = AppDataSource.getRepository(Usuario);
+      const usuarioRepository = db.getRepository(Usuario);
       const usuario = await usuarioRepository.findOne({
         where: { id: Number(id) },
         select: ["id", "nome", "email", "telefone", "endereco", "tipo_usuario", "cidade_id", "criado_em"],
@@ -114,7 +116,7 @@ export class UsuarioController {
       const { id } = req.params;
       const { nome, telefone, endereco, tipo_usuario, cidade_id, senha } = req.body;
 
-      const usuarioRepository = AppDataSource.getRepository(Usuario);
+      const usuarioRepository = db.getRepository(Usuario);
       const usuario = await usuarioRepository.findOne({
         where: { id: Number(id) },
       });
@@ -161,3 +163,4 @@ export class UsuarioController {
     }
   }
 }
+
